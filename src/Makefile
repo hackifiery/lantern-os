@@ -1,48 +1,36 @@
-ASM = nasm
-CC = i686-elf-gcc
-LD = ld
-ASFLAGS = -f elf32
-CFLAGS = -m32 -c -ffreestanding -fno-stack-protector -nostdlib -fno-pic -std=c99
-LDFLAGS = -m elf_i386 -T linker.ld
-BIN = kern.bin
+ASM      := nasm
+CC       := i686-elf-gcc
+LD       := i686-elf-ld
+BIN      := kern.bin
+
+ASFLAGS  := -f elf32
+CFLAGS   := -m32 -ffreestanding -fno-stack-protector -nostdlib -fno-pic -std=c99
+LDFLAGS  := -m elf_i386 -T linker.ld
+
+OBJS := \
+    boot.o \
+    kernel.o \
+    io.o \
+    serial.o \
+    idt.o \
+    interrupts.o \
+    string_utils.o \
+    sys.o \
+    gdt.o \
+    gdt_flush.o
+
+.PHONY: all clean
 
 all: $(BIN)
 
-$(BIN): kernel.o kernelC.o io.o serial.o idt.o interrupts.o string_utils.o sys.o gdt.o gdt_flush.o
-	$(LD) $(LDFLAGS) kernel.o kernelC.o io.o serial.o idt.o interrupts.o string_utils.o sys.o gdt.o gdt_flush.o -o $(BIN)
+$(BIN): $(OBJS)
+	$(LD) $(LDFLAGS) $^ -o $@
 
-kernel.o: kernel.asm
-	$(ASM) $(ASFLAGS) kernel.asm -o kernel.o
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-io.o: io.c
-	$(CC) $(CFLAGS) io.c -o io.o
-
-serial.o: serial.c
-	$(CC) $(CFLAGS) serial.c -o serial.o
-
-idt.o: idt.c
-	$(CC) $(CFLAGS) idt.c -o idt.o
-
-sys.o: sys.c
-	$(CC) $(CFLAGS) sys.c -o sys.o
-
-kernelC.o: kernel.c
-	$(CC) $(CFLAGS) kernel.c -o kernelC.o
-
-interrupts.o: interrupts.asm
-	$(ASM) $(ASFLAGS) interrupts.asm -o interrupts.o
-
-string_utils.o: string_utils.c
-	$(CC) $(CFLAGS) string_utils.c -o string_utils.o
-
-gdt.o: gdt.c
-	$(CC) $(CFLAGS) gdt.c -o gdt.o
-
-gdt_flush.o: gdt_flush.asm
-	$(ASM) $(ASFLAGS) gdt_flush.asm -o gdt_flush.o
-
-run: $(BIN)
-	qemu-system-i386 -kernel $(BIN) -display curses
+%.o: %.asm
+	$(ASM) $(ASFLAGS) $< -o $@
 
 clean:
 	rm -f *.o $(BIN)

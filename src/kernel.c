@@ -4,6 +4,8 @@
 #include "sys.h"
 #include "gdt.h"
 
+extern void halt(void);
+
 void kmain(void) {
     initIdt();
     initGdt();

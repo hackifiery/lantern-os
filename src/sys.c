@@ -1,5 +1,8 @@
 #include "sys.h"
 #include "io.h"
+
+extern void halt(void);
+
 void reboot() {
     short good = 0x02;
     while (good & 0x02)
