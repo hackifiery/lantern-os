@@ -6,10 +6,10 @@ CFLAGS = -m32 -c -ffreestanding -fno-stack-protector -nostdlib -fno-pic -std=c99
 LDFLAGS = -m elf_i386 -T linker.ld
 BIN = kern.bin
 
-all: $(BIN) run
+all: $(BIN)
 
-$(BIN): kernel.o kernelC.o io.o serial.o idt.o interrupts.o string_utils.o
-	$(LD) $(LDFLAGS) kernel.o kernelC.o io.o serial.o idt.o interrupts.o string_utils.o -o $(BIN)
+$(BIN): kernel.o kernelC.o io.o serial.o idt.o interrupts.o string_utils.o sys.o
+	$(LD) $(LDFLAGS) kernel.o kernelC.o io.o serial.o idt.o interrupts.o string_utils.o sys.o -o $(BIN)
 
 kernel.o: kernel.asm
 	$(ASM) $(ASFLAGS) kernel.asm -o kernel.o
@@ -23,6 +23,9 @@ serial.o: serial.c
 idt.o: idt.c
 	$(CC) $(CFLAGS) idt.c -o idt.o
 
+sys.o: sys.c
+	$(CC) $(CFLAGS) sys.c -o sys.o
+
 kernelC.o: kernel.c
 	$(CC) $(CFLAGS) kernel.c -o kernelC.o
 
@@ -33,7 +36,7 @@ string_utils.o: string_utils.c
 	$(CC) $(CFLAGS) string_utils.c -o string_utils.o
 
 run: $(BIN)
-	qemu-system-i386 -kernel $(BIN)
+	qemu-system-i386 -kernel $(BIN) -display curses
 
 clean:
 	rm -f *.o $(BIN)

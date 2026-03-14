@@ -6,8 +6,12 @@ align 4
     dd -(0x1BADB002 + 0x03)    ; Checksum
 
 section .text
-extern kmain                   ; Declare that kmain is defined in the C file
+extern kmain
 global _start
+global halt
+
+halt:
+    hlt
 
 _start:
     cli                ; Disable interrupts during setup
@@ -21,6 +25,7 @@ _start:
     
     hlt                   ; Halt if C code ever returns
 .hang:
+    hlt
     jmp .hang
 
 section .bss
