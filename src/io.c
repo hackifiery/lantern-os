@@ -49,7 +49,7 @@ void enableCursor(unsigned int cursor_start, unsigned int cursor_end) {
 	outb(0x3D5, (inb(0x3D5) & 0xE0) | cursor_end);
 }
 
-void moveCursor(unsigned int x, unsigned int y) {
+void moveCursor(int x, int y) {
     unsigned short pos = y * VGA_W + x;
 
     outb(0x3D4, 0x0E); // Register 0x0E: Cursor Location High
@@ -117,6 +117,7 @@ void clearScreen(void) {
         video_memory[i * 2] = ' ';
         video_memory[i * 2 + 1] = 0x07;
     }
+    cursorX = 0, cursorY = 0;
     moveCursor(0, 0);
 }
 

@@ -25,7 +25,7 @@ static inline unsigned char inb(unsigned short port) {
 void keyboardHandler();
 void enableCursor(unsigned int cursor_start, unsigned int cursor_end);
 char getInput(void);
-void moveCursor(unsigned int x, unsigned int y);
+void moveCursor(int x, int y);
 void advanceCursor(void);
 void writeChar(char c);
 void writeStr(char s[]);

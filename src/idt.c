@@ -42,9 +42,20 @@ void initIdt() {
     loadIdt((unsigned int)&idtp);
 }
 
-// This is called by the Assembly stub
 void irqHandler() {
     sysTicks++;
     // Send End of Interrupt (EOI) to the PIC chip
     outb(0x20, 0x20); 
+}
+
+void initTimer(unsigned int frequency) {
+    // PIT has an internal clock of 1193180 Hz
+    unsigned int divisor = 1193180 / frequency;
+
+    // Send the command byte (0x36 sets square wave mode)
+    outb(0x43, 0x36);
+
+    // Split the divisor into two bytes and send them to the PIT
+    outb(0x40, (unsigned char)(divisor & 0xFF));
+    outb(0x40, (unsigned char)((divisor >> 8) & 0xFF));
 }

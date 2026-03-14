@@ -12,3 +12,5 @@ struct idt_ptr {
 } __attribute__((packed));
 
 extern void loadIdt(unsigned int idt_ptr_address);
+extern volatile unsigned int sysTicks;
+void initTimer(unsigned int frequency);
