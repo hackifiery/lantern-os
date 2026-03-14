@@ -1,30 +1,33 @@
 ASM      := nasm
-CC       := i686-elf-gcc
-LD       := i686-elf-ld
 BIN      := kern.bin
 
-ASFLAGS  := -f elf32
-CFLAGS   := -m32 -ffreestanding -fno-stack-protector -nostdlib -fno-pic -std=c99
-LDFLAGS  := -m elf_i386 -T linker.ld
+ifeq ($(OS),Windows_NT)
+    CC      := gcc
+    LD      := ld
+	
+    LDFLAGS := -m i386pe -T linker.ld
+    OBJCOPY := objcopy
+else
+    CC      := i686-elf-gcc
+    LD      := i686-elf-ld
+    LDFLAGS := -m elf_i386 -T linker.ld
+endif
 
-OBJS := \
-    boot.o \
-    kernel.o \
-    io.o \
-    serial.o \
-    idt.o \
-    interrupts.o \
-    string_utils.o \
-    sys.o \
-    gdt.o \
-    gdt_flush.o
+ASFLAGS  := -f elf32
+
+CFLAGS   := -m32 -ffreestanding -fno-stack-protector -nostdlib -fno-pic -std=c99 -fno-leading-underscore
+
+OBJS := boot.o kernel.o io.o serial.o idt.o interrupts.o string_utils.o sys.o gdt.o gdt_flush.o
 
 .PHONY: all clean
 
 all: $(BIN)
 
 $(BIN): $(OBJS)
-	$(LD) $(LDFLAGS) $^ -o $@
+	$(LD) $(LDFLAGS) $(OBJS) -o $@
+ifeq ($(OS),Windows_NT)
+	$(OBJCOPY) -O elf32-i386 $@ $@
+endif
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
