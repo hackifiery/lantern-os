@@ -7,7 +7,7 @@ all: src run
 src:
 	$(MAKE) -C src all
 
-img: 
+img: src
 	dd if=/dev/zero of=lanternos.img bs=1M count=10
 	mkfs.vfat -F 16 lanternos.img
 	syslinux --install lanternos.img
@@ -21,8 +21,8 @@ img:
 	sudo umount mnt
 
 run: img src
-	#qemu-system-i386 -drive format=raw,file=lanternos.img -display curses
-	qemu-system-i386 -kernel src/kern.bin -display curses
+	qemu-system-i386 -drive format=raw,file=lanternos.img -m 16
+	#qemu-system-i386 -kernel src/kern.bin -display curses
 
 clean:
 	$(MAKE) -C src clean

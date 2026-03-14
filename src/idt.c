@@ -20,7 +20,7 @@ void remapPic() {
 void setIdtGate(unsigned char num, unsigned int base) {
     idt[num].base_lo = (base & 0xFFFF);
     idt[num].base_hi = (base >> 16) & 0xFFFF;
-    idt[num].sel     = 0x20;
+    idt[num].sel     = 0x08;
     idt[num].always0 = 0;
     idt[num].flags   = 0x8E; 
 }

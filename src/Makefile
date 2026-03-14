@@ -8,8 +8,8 @@ BIN = kern.bin
 
 all: $(BIN)
 
-$(BIN): kernel.o kernelC.o io.o serial.o idt.o interrupts.o string_utils.o sys.o
-	$(LD) $(LDFLAGS) kernel.o kernelC.o io.o serial.o idt.o interrupts.o string_utils.o sys.o -o $(BIN)
+$(BIN): kernel.o kernelC.o io.o serial.o idt.o interrupts.o string_utils.o sys.o gdt.o gdt_flush.o
+	$(LD) $(LDFLAGS) kernel.o kernelC.o io.o serial.o idt.o interrupts.o string_utils.o sys.o gdt.o gdt_flush.o -o $(BIN)
 
 kernel.o: kernel.asm
 	$(ASM) $(ASFLAGS) kernel.asm -o kernel.o
@@ -34,6 +34,12 @@ interrupts.o: interrupts.asm
 
 string_utils.o: string_utils.c
 	$(CC) $(CFLAGS) string_utils.c -o string_utils.o
+
+gdt.o: gdt.c
+	$(CC) $(CFLAGS) gdt.c -o gdt.o
+
+gdt_flush.o: gdt_flush.asm
+	$(ASM) $(ASFLAGS) gdt_flush.asm -o gdt_flush.o
 
 run: $(BIN)
 	qemu-system-i386 -kernel $(BIN) -display curses

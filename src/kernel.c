@@ -2,9 +2,11 @@
 #include "string_utils.h"
 #include "idt.h"
 #include "sys.h"
+#include "gdt.h"
 
 void kmain(void) {
     initIdt();
+    initGdt();
     clearScreen();
     initTimer(100);
     enableCursor(14, 15);
