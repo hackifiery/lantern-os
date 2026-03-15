@@ -1,3 +1,6 @@
+#ifndef LANTERN_IO_H
+#define LANTERN_IO_H
+
 #define VGA_W 80
 #define VGA_H 25
 // Pointer to the start of VGA video memory
@@ -10,13 +13,14 @@ typedef __builtin_va_list va_list;
 #define va_end(v)     __builtin_va_end(v)
 
 extern unsigned int cursorX, cursorY;
-extern unsigned char keymap[128];
+extern unsigned char keymap[128], keymapShifted[128];
+extern int shiftActive, capsLockActive;
 
 static inline void outb(unsigned short port, unsigned char val) {
     __asm__ volatile ( "outb %0, %1" : : "a"(val), "Nd"(port) );
 }
 
-void outw(unsigned short port, unsigned short data) {
+static inline void outw(unsigned short port, unsigned short data) {
     __asm__ volatile ("outw %w0, %w1" : : "a"(data), "Nd"(port));
 }
 
@@ -38,3 +42,5 @@ void fmtWrite(const char *fmt, ...);
 void fmtGet(const char *fmt, ...);
 void sfmtWrite(char* str, const char *fmt, ...);
 void sfmtGet(const char *src, const char *fmt, ...);
+
+#endif // LANTERN_IO_H

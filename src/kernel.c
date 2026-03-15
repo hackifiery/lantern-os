@@ -8,40 +8,38 @@ extern void halt(void);
 
 static void com(void) {
     char input[256];
-    fmtWrite("Welcome to lanternOS!\n");
-    fmtWrite("Type 'help' for commands.\n\n");
 
-    while(1) {
-        fmtWrite("-> ");
+    for(;;) {
+        fmtWrite("lanternCOM -> ");
         fmtGet("%s", input);
+        // lower(input);
+        #define cmd(s) else if (strcmp(input, s) == 0)
+
         if (strcmp(input, "") == 0) continue;
 
-        if (strcmp(input, "help") == 0) {
-            fmtWrite("Available commands: help, clear, ping, uptime, reboot, shutdown");
-        } 
-        else if (strcmp(input, "clear") == 0) {
+        cmd("help") {
+            fmtWrite("Available commands: help, com, exit, cls, ping, uptime, reboot, shutdown");
+        }
+        cmd("com") com();
+        cmd("exit") return;
+        cmd("cls") {
             clearScreen();
             continue;
-        } 
-        else if (strcmp(input, "ping") == 0) {
-            fmtWrite("Pong!");
-        } 
-        else if (strcmp(input, "uptime") == 0) {
+        }
+        cmd("ping") fmtWrite("Pong!");
+        cmd("uptime") {
             unsigned int seconds = sysTicks / 100;
             unsigned int milliseconds = (sysTicks % 100) * 10;
             
             fmtWrite("%d.%d s", seconds, milliseconds);
         }
-        else if (strcmp(input, "reboot") == 0) {
-            reboot();
-        }
-        else if (strcmp(input, "shutdown") == 0) {
-            shutdown();
-        }
+        cmd("reboot")   reboot();
+        cmd("shutdown") shutdown();
         else {
             fmtWrite("Unknown command: %s", input);
         }
         fmtWrite("\n");
+        #undef cmd
     }
 }
 
@@ -52,5 +50,7 @@ void kmain(void) {
     initTimer(100);
     enableCursor(14, 15);
     // __asm__ volatile("sti");
-    com();
+    fmtWrite("Welcome to lanternOS!\n");
+    fmtWrite("Type 'help' for commands.\n\n");
+    for (;;) com();
 }

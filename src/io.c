@@ -9,6 +9,8 @@ unsigned int cursorX = 0, cursorY = 0;
 volatile char keyBuffer[BUFFER_SIZE];
 volatile int head = 0; // Where the interrupt writes
 volatile int tail = 0; // Where the program reads
+int shiftActive = 0;
+int capsLockActive = 0;
 
 unsigned char keymap[128] = {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	'9', '0', '-', '=', '\b',
@@ -17,11 +19,43 @@ unsigned char keymap[128] = {
  '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/',   0, '*',   0, ' '
 };
 
+unsigned char keymapShifted[128] = {
+    0,  27, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b',
+  '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',
+    0,  'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~',   0,
+ '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?',   0, '*',   0, ' '
+};
+
 void keyboardHandler(void) {
     unsigned char scancode = inb(0x60);
-    
-    if (!(scancode & 0x80)) {
-        char c = keymap[scancode];
+
+    // Check for "Break" codes (Key Released)
+    if (scancode & 0x80) {
+        unsigned char released = scancode & 0x7F;
+        if (released == 0x2A || released == 0x36) {
+            shiftActive = 0;
+        }
+    } 
+    // Check for "Make" codes (Key Pressed)
+    else {
+        if (scancode == 0x2A || scancode == 0x36) {
+            shiftActive = 1;
+            goto end; // Don't put Shift into the text buffer
+        }
+        if (scancode == 0x3A) {
+            capsLockActive = !capsLockActive; // Toggle Caps
+            goto end;
+        }
+
+        char c;
+        // TODO: capslock only affects letters
+        if (shiftActive ^ capsLockActive) {
+            c = keymapShifted[scancode];
+        }
+        else {
+            c = keymap[scancode];
+        }
+
         if (c > 0) {
             int next = (head + 1) % BUFFER_SIZE;
             if (next != tail) {
@@ -31,9 +65,9 @@ void keyboardHandler(void) {
         }
     }
 
-    outb(0x20, 0x20); // tell the PIC the interrupt is handled
+end:
+    outb(0x20, 0x20);
 }
-
 char getInput(void) {
     if (head == tail) return 0; // Buffer empty
 
