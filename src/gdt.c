@@ -18,7 +18,7 @@ void setGdtGate(int num, unsigned int base, unsigned int limit, unsigned char ac
     gdt[num].access      = access;
 }
 
-void initGdt() {
+void initGdt(void) {
     gdtp.limit = (sizeof(struct GdtEntry) * 3) - 1;
     gdtp.base  = (unsigned int)&gdt;
 

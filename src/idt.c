@@ -4,7 +4,7 @@ struct idtEntry idt[256];
 struct idt_ptr idtp;
 volatile unsigned int sysTicks = 0;
 
-void remapPic() {
+void remapPic(void) {
     outb(0x20, 0x11); // Initialize Master
     outb(0xA0, 0x11); // Initialize Slave
     outb(0x21, 0x20); // Master offset (32)
@@ -25,15 +25,15 @@ void setIdtGate(unsigned char num, unsigned int base) {
     idt[num].flags   = 0x8E; 
 }
 
-void initIdt() {
+void initIdt(void) {
     idtp.limit = (sizeof(struct idtEntry) * 256) - 1;
     idtp.base  = (unsigned int)&idt;
 
     for(int i = 0; i < 256; i++) setIdtGate(i, 0);
 
     // register gates
-    extern void irq0();
-    extern void irq1();
+    extern void irq0(void);
+    extern void irq1(void);
     setIdtGate(32, (unsigned int)irq0); 
     setIdtGate(33, (unsigned int)irq1);
 
@@ -41,7 +41,7 @@ void initIdt() {
     loadIdt((unsigned int)&idtp);
 }
 
-void irqHandler() {
+void irqHandler(void) {
     sysTicks++;
     // Send End of Interrupt (EOI) to the PIC chip
     outb(0x20, 0x20); 

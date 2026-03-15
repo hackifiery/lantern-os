@@ -6,14 +6,7 @@
 
 extern void halt(void);
 
-void kmain(void) {
-    initIdt();
-    initGdt();
-    clearScreen();
-    initTimer(100);
-    enableCursor(14, 15);
-    // __asm__ volatile("sti");
-    
+static void com(void) {
     char input[256];
     fmtWrite("Welcome to lanternOS!\n");
     fmtWrite("Type 'help' for commands.\n\n");
@@ -24,10 +17,11 @@ void kmain(void) {
         if (strcmp(input, "") == 0) continue;
 
         if (strcmp(input, "help") == 0) {
-            fmtWrite("Available commands: help, clear, ping, uptime");
+            fmtWrite("Available commands: help, clear, ping, uptime, reboot, shutdown");
         } 
         else if (strcmp(input, "clear") == 0) {
             clearScreen();
+            continue;
         } 
         else if (strcmp(input, "ping") == 0) {
             fmtWrite("Pong!");
@@ -41,9 +35,22 @@ void kmain(void) {
         else if (strcmp(input, "reboot") == 0) {
             reboot();
         }
+        else if (strcmp(input, "shutdown") == 0) {
+            shutdown();
+        }
         else {
             fmtWrite("Unknown command: %s", input);
         }
         fmtWrite("\n");
     }
+}
+
+void kmain(void) {
+    initIdt();
+    initGdt();
+    clearScreen();
+    initTimer(100);
+    enableCursor(14, 15);
+    // __asm__ volatile("sti");
+    com();
 }

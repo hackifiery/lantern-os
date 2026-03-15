@@ -11,4 +11,4 @@ struct GdtPtr {
     unsigned short limit;
     unsigned int   base;
 } __attribute__((packed));
-void initGdt();
+void initGdt(void);

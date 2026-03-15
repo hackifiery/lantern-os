@@ -16,13 +16,17 @@ static inline void outb(unsigned short port, unsigned char val) {
     __asm__ volatile ( "outb %0, %1" : : "a"(val), "Nd"(port) );
 }
 
+void outw(unsigned short port, unsigned short data) {
+    __asm__ volatile ("outw %w0, %w1" : : "a"(data), "Nd"(port));
+}
+
 static inline unsigned char inb(unsigned short port) {
     unsigned char ret;
     __asm__ volatile ( "inb %1, %0" : "=a"(ret) : "Nd"(port) );
     return ret;
 }
 
-void keyboardHandler();
+void keyboardHandler(void);
 void enableCursor(unsigned int cursor_start, unsigned int cursor_end);
 char getInput(void);
 void moveCursor(int x, int y);

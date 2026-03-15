@@ -17,7 +17,7 @@ unsigned char keymap[128] = {
  '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/',   0, '*',   0, ' '
 };
 
-void keyboardHandler() {
+void keyboardHandler(void) {
     unsigned char scancode = inb(0x60);
     
     if (!(scancode & 0x80)) {

@@ -1,7 +1,7 @@
 #include "io.h"
 #define COM1 0x3F8
 
-int initSerial() {
+int initSerial(void) {
    outb(COM1 + 1, 0x00);    // Disable all interrupts
    outb(COM1 + 3, 0x80);    // Enable DLAB (set baud rate divisor)
    outb(COM1 + 0, 0x03);    // Set divisor to 3 (38400 baud)
@@ -12,7 +12,7 @@ int initSerial() {
    return 0;
 }
 
-int isTransmitEmpty() {
+int isTransmitEmpty(void) {
    return inb(COM1 + 5) & 0x20;
 }
 
