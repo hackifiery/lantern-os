@@ -16,14 +16,15 @@ halt:
 _start:
     cli                ; Disable interrupts during setup
     mov esp, stack_top ; Set up stack pointer
-    extern initIdt     ; Declare IDT init
-    extern initSerial  ; Declare Serial init
+    extern initIdt
+    extern initSerial
 
-    call initSerial    ; Initialize Serial port
-    call initIdt       ; Initialize IDT and enable interrupts (sti is inside loadIdt)
-    call kmain         ; NOW jump to your C code
+    call initSerial
+    call initIdt
+    push ebx            ; multiboot
+    call kmain
     
-    hlt                   ; Halt if C code ever returns
+    hlt
 .hang:
     hlt
     jmp .hang
@@ -31,5 +32,5 @@ _start:
 section .bss
 align 16
 stack_bottom:
-resb 16384                     ; 16 KB stack
+resb 16384              ; 16 KB stack
 stack_top:

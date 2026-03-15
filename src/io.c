@@ -1,6 +1,20 @@
 #include "io.h"
 #include "serial.h"
 
+enum VGAColor {
+    BLACK = 0, BLUE = 1, GREEN = 2, CYAN = 3,
+    RED = 4, MAGENTA = 5, BROWN = 6, LIGHT_GRAY = 7,
+    DARK_GRAY = 8, LIGHT_BLUE = 9, LIGHT_GREEN = 10,
+    LIGHT_CYAN = 11, LIGHT_RED = 12, LIGHT_MAGENTA = 13,
+    YELLOW = 14, WHITE = 15
+};
+
+static inline unsigned char vgaColor(enum VGAColor fg, enum VGAColor bg) {
+    return (bg << 4) | (fg & 0x0F);
+}
+
+#define COLOR vgaColor(GREEN, BLACK)
+
 #define SERIAL 1
 #define BUFFER_SIZE 256
 
@@ -118,13 +132,13 @@ void writeChar(char c) {
         // Erase the character at the new position
         int offset = VGA_OFF;
         VGA_START[offset] = ' ';
-        VGA_START[offset + 1] = 0x07;
+        VGA_START[offset + 1] = COLOR;
     }
     else {
         int offset = VGA_OFF;
         
         VGA_START[offset] = c;
-        VGA_START[offset + 1] = 0x07; // Light gray
+        VGA_START[offset + 1] = COLOR;
         
         cursorX++;
     }
@@ -149,7 +163,7 @@ void clearScreen(void) {
     for (int i = 0; i < VGA_W * VGA_H; i++) {
         // Multiplied by 2 because each character has 2 bytes (char + attr)
         video_memory[i * 2] = ' ';
-        video_memory[i * 2 + 1] = 0x07;
+        video_memory[i * 2 + 1] = COLOR;
     }
     cursorX = 0, cursorY = 0;
     moveCursor(0, 0);
@@ -261,7 +275,7 @@ static void vsfmtGet(const char *src, const char *fmt, va_list args) {
                 }
                 case 's': {
                     char *dest = va_arg(args, char*);
-                    while (src[s_ptr] != ' ' && src[s_ptr] != '\0' && src[s_ptr] != '\n') {
+                    while (src[s_ptr] != '\0' && src[s_ptr] != '\n') {
                         *dest++ = src[s_ptr++];
                     }
                     *dest = '\0';
@@ -274,10 +288,7 @@ static void vsfmtGet(const char *src, const char *fmt, va_list args) {
                 }
             }
         } else {
-            // Skip whitespace in format string to make it robust
-            if (fmt[i] == ' ') {
-                while (src[s_ptr] == ' ') s_ptr++;
-            } else if (src[s_ptr] == fmt[i]) {
+            if (src[s_ptr] == fmt[i]) {
                 s_ptr++;
             }
         }

@@ -18,15 +18,16 @@ img: src
 	sudo cp /usr/share/syslinux/mboot.c32 mnt/
 	sudo cp /usr/share/syslinux/libcom32.c32 mnt/
 	sudo cp src/kern.bin mnt/kern.bin
-	echo -e "DEFAULT lantern\nLABEL lantern\n  SAY Loading lanternOS...\n  KERNEL /mboot.c32\n  APPEND /kern.bin" | sudo tee mnt/syslinux.cfg
+	echo -e "default lantern\n  label lantern\n say Loading lanternOS...\n  kernel /mboot.c32\n  append /kern.bin" | sudo tee mnt/syslinux.cfg
 	sudo umount mnt
+run: img src
+	qemu-system-i386 -drive format=raw,file=lanternos.img -m 4
 else
 img: src
+run: src
+	qemu-system-i386 -kernel src/kern.bin
 endif
 
-run: img src
-	#qemu-system-i386 -drive format=raw,file=lanternos.img -m 16
-	qemu-system-i386 -kernel src/kern.bin
 
 clean:
 	$(MAKE) -C src clean
