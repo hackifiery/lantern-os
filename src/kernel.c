@@ -15,8 +15,6 @@
 #endif
 
 
-extern void halt(void);
-
 static int tokenize(char* str, char** tokens, int max_tokens) {
     int count = 0;
     int in_token = 0;
@@ -76,6 +74,11 @@ static void com(struct multibootInfo* mbPtr) {
             else if (strcmp(tokens[1], "/g") == 0) fmtWrite("total = %dg, used = %dg, free = %dg", total/1024/1024, used/1024/1024, (total - used)/1024/1024);
             else if (strcmp(tokens[1], "/b") == 0) fmtWrite("total = %db, used = %db, free = %db", total*1024, used*1024, (total - used)*1024);
             else                                   fmtWrite("total = %dk, used = %dk, free = %dk", total, used, total - used);
+        }
+        cmd("panic") {
+            if (!(atoi(tokens[1]) <= 21 || atoi(tokens[1]) == 34)) fmtWrite("Unknown fault interrupt");
+            if (tokens[1]) sendInterrupt(atoi(tokens[1]));
+            else panic();
         }
         cmd("reboot")   reboot();
         cmd("shutdown") shutdown();

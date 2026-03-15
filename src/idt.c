@@ -1,7 +1,8 @@
 #include "idt.h"
 #include "io.h"
+#include "sys.h"
 struct idtEntry idt[256];
-struct idt_ptr idtp;
+struct idtPtr idtp;
 volatile unsigned int sysTicks = 0;
 
 void remapPic(void) {
@@ -30,12 +31,59 @@ void initIdt(void) {
     idtp.base  = (unsigned int)&idt;
 
     for(int i = 0; i < 256; i++) setIdtGate(i, 0);
+    // exceptions/faults
+    extern void isr0();
+    extern void isr1();
+    // extern void isr2();
+    extern void isr3();
+    extern void isr4();
+    extern void isr5();
+    extern void isr6();
+    extern void isr7();
+    extern void isr8();
+    extern void isr10();
+    extern void isr11();
+    extern void isr12();
+    extern void isr13();
+    extern void isr14();
+    // extern void isr15();
+    extern void isr16();
+    extern void isr17();
+    // extern void isr18();
+    extern void isr19();
+    // extern void isr20();
+    extern void isr21();
+    extern void isr34();
+    
+    setIdtGate(0, (unsigned int)isr0);
+    setIdtGate(1, (unsigned int)isr1);
+    // setIdtGate(1, (unsigned int)isr2);
+    setIdtGate(3, (unsigned int)isr3);
+    setIdtGate(4, (unsigned int)isr4);
+    setIdtGate(5, (unsigned int)isr5);
+    setIdtGate(6, (unsigned int)isr6);
+    setIdtGate(7, (unsigned int)isr7);
+    setIdtGate(8, (unsigned int)isr8);
+    setIdtGate(10, (unsigned int)isr10);
+    setIdtGate(11, (unsigned int)isr11);
+    setIdtGate(12, (unsigned int)isr12);
+    setIdtGate(13, (unsigned int)isr13);
+    setIdtGate(14, (unsigned int)isr14);
+    // setIdtGate(15, (unsigned int)isr15);
+    setIdtGate(16, (unsigned int)isr16);
+    setIdtGate(17, (unsigned int)isr17);
+    // setIdtGate(18, (unsigned int)isr18);
+    setIdtGate(19, (unsigned int)isr19);
+    // setIdtGate(20, (unsigned int)isr20);
+    setIdtGate(21, (unsigned int)isr21);
 
     // register gates
     extern void irq0(void);
     extern void irq1(void);
     setIdtGate(32, (unsigned int)irq0); 
     setIdtGate(33, (unsigned int)irq1);
+
+    setIdtGate(34, (unsigned int)isr34); // user-thrown exception
 
     remapPic();
     loadIdt((unsigned int)&idtp);
@@ -57,4 +105,51 @@ void initTimer(unsigned int frequency) {
     // Split the divisor into two bytes and send them to the PIT
     outb(0x40, (unsigned char)(divisor & 0xFF));
     outb(0x40, (unsigned char)((divisor >> 8) & 0xFF));
+}
+
+void fault(struct Registers *r) {
+    COLOR = vgaColor(RED, BLACK);
+    clearScreen();
+    fmtWrite("--- KERNEL PANIC!!! ---\n\n");
+    
+
+    switch(r->int_no) {
+        case 0:  fmtWrite("Division Error (#DE)"); break;
+        case 1:  fmtWrite("Debug Exception (#DB)"); break;
+        case 3:  fmtWrite("Breakpoint (#BP)"); break;
+        case 4:  fmtWrite("Overflow (#OF)"); break;
+        case 5:  fmtWrite("BOUND Range Exceeded (#BR)"); break;
+        case 6:  fmtWrite("Invalid Opcode (#UD)"); break;
+        case 7:  fmtWrite("Device Not Available (#NM)"); break;
+        case 8:  fmtWrite("Double Fault (#DF)"); break;
+        case 9:  fmtWrite("Coprocessor Segment Overrun"); break;
+        case 10: fmtWrite("Invalid TSS (#TS)"); break;
+        case 11: fmtWrite("Segment Not Present (#NP)"); break;
+        case 12: fmtWrite("Stack-Segment Fault (#SS)"); break;
+        case 13: fmtWrite("General Protection Fault (#GP)"); break;
+        case 14: 
+            fmtWrite("Page Fault (#PF)");
+            //  the address is in the CR2 register
+            unsigned int faulting_addr;
+            __asm__ volatile("mov %%cr2, %0" : "=r" (faulting_addr));
+            fmtWrite("\nAddress: 0x%x", faulting_addr);
+            break;
+        case 16: fmtWrite("x87 Floating-Point Exception (#MF)"); break;
+        case 17: fmtWrite("Alignment Check (#AC)"); break;
+        case 19: fmtWrite("SIMD Floating-Point Exception (#XM)"); break;
+        case 21: fmtWrite("Control Protection Exception (#CP)"); break;
+        case 34: fmtWrite("User-thrown Exception"); break;
+        
+        default:
+            fmtWrite("Unknown Exception #%d", r->int_no);
+            break;
+    }
+
+    fmtWrite("\n\nError Code: %d", r->err_code);
+    fmtWrite("\nEIP: 0x%x  CS: 0x%x", r->eip, r->cs);
+    fmtWrite("\nEAX: 0x%x  EBX: 0x%x", r->eax, r->ebx);
+
+    fmtWrite("\n\nSystem Halted.");
+    disableCursor();
+    halt();
 }

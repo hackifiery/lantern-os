@@ -2,8 +2,6 @@
 #include "io.h"
 //#include <stdint.h>
 
-extern void halt(void);
-
 extern unsigned int _kernelStart;
 extern unsigned int _kernelEnd;
 

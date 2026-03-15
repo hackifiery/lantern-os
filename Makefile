@@ -20,7 +20,7 @@ img: src
 	sudo cp src/kern.bin mnt/kern.bin
 	echo -e "default lantern\n  label lantern\n say Loading lanternOS...\n  kernel /mboot.c32\n  append /kern.bin" | sudo tee mnt/syslinux.cfg
 	sudo umount mnt
-run: img src
+run: src img
 	qemu-system-i386 -drive format=raw,file=lanternos.img -m 4
 else
 img: src

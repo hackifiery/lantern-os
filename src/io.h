@@ -1,6 +1,20 @@
 #ifndef LANTERN_IO_H
 #define LANTERN_IO_H
 
+enum VGAColor {
+    BLACK = 0, BLUE = 1, GREEN = 2, CYAN = 3,
+    RED = 4, MAGENTA = 5, BROWN = 6, LIGHT_GRAY = 7,
+    DARK_GRAY = 8, LIGHT_BLUE = 9, LIGHT_GREEN = 10,
+    LIGHT_CYAN = 11, LIGHT_RED = 12, LIGHT_MAGENTA = 13,
+    YELLOW = 14, WHITE = 15
+};
+
+static inline unsigned char vgaColor(enum VGAColor fg, enum VGAColor bg) {
+    return (bg << 4) | (fg & 0x0F);
+}
+
+extern unsigned char COLOR;
+
 #define VGA_W 80
 #define VGA_H 25
 // Pointer to the start of VGA video memory
@@ -32,6 +46,7 @@ static inline unsigned char inb(unsigned short port) {
 
 void keyboardHandler(void);
 void enableCursor(unsigned int cursor_start, unsigned int cursor_end);
+void disableCursor(void);
 char getInput(void);
 void moveCursor(int x, int y);
 void advanceCursor(void);
@@ -42,5 +57,6 @@ void fmtWrite(const char *fmt, ...);
 void fmtGet(const char *fmt, ...);
 void sfmtWrite(char* str, const char *fmt, ...);
 void sfmtGet(const char *src, const char *fmt, ...);
+int atoi(const char *s);
 
 #endif // LANTERN_IO_H

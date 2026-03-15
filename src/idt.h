@@ -9,13 +9,16 @@ struct idtEntry {
     unsigned short base_hi;    // Upper 16 bits of handler address
 } __attribute__((packed));
 
-struct idt_ptr {
+struct idtPtr {
     unsigned short limit;      // Size of IDT - 1
     unsigned int   base;       // Address of the IDT array
 } __attribute__((packed));
 
-extern void loadIdt(unsigned int idt_ptr_address);
+extern void loadIdt(unsigned int idtPtr_address);
+extern void panic(void);
+extern void sendInterrupt(unsigned char n);
 extern volatile unsigned int sysTicks;
+
 void initTimer(unsigned int frequency);
 void initIdt(void);
 

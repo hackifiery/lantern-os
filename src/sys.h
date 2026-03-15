@@ -12,11 +12,20 @@ struct multibootInfo {
     // tba
 } __attribute__((packed));
 
+struct Registers {
+    unsigned int edi, esi, ebp, esp, ebx, edx, ecx, eax;
+    unsigned int int_no, err_code;
+    unsigned int eip, cs, eflags;
+};
+
 // note: in kb
 unsigned int getUsedMem(void);
 // note: in kb
 unsigned int getTotalMem(struct multibootInfo* mbPtr);
 void reboot(void);
 void shutdown(void);
+
+extern void halt(void);
+
 
 #endif // LANTERN_SYS_H

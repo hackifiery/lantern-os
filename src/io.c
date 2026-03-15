@@ -1,22 +1,10 @@
 #include "io.h"
 #include "serial.h"
 
-enum VGAColor {
-    BLACK = 0, BLUE = 1, GREEN = 2, CYAN = 3,
-    RED = 4, MAGENTA = 5, BROWN = 6, LIGHT_GRAY = 7,
-    DARK_GRAY = 8, LIGHT_BLUE = 9, LIGHT_GREEN = 10,
-    LIGHT_CYAN = 11, LIGHT_RED = 12, LIGHT_MAGENTA = 13,
-    YELLOW = 14, WHITE = 15
-};
-
-static inline unsigned char vgaColor(enum VGAColor fg, enum VGAColor bg) {
-    return (bg << 4) | (fg & 0x0F);
-}
-
-#define COLOR vgaColor(GREEN, BLACK)
-
 #define SERIAL 1
 #define BUFFER_SIZE 256
+
+unsigned char COLOR = 0x02; // vgaColor(GREEN, BLACK);
 
 unsigned int cursorX = 0, cursorY = 0;
 
@@ -97,6 +85,11 @@ void enableCursor(unsigned int cursor_start, unsigned int cursor_end) {
 	outb(0x3D5, (inb(0x3D5) & 0xE0) | cursor_end);
 }
 
+void disableCursor(void) {
+	outb(0x3D4, 0x0A);
+	outb(0x3D5, 0x20);
+}
+
 void moveCursor(int x, int y) {
     unsigned short pos = y * VGA_W + x;
 
@@ -171,7 +164,7 @@ void clearScreen(void) {
 
 
 
-static int atoi(const char *s) {
+int atoi(const char *s) {
     int res = 0;
     int sign = 1;
 
