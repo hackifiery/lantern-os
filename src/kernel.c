@@ -48,7 +48,7 @@ static void com(struct multibootInfo* mbPtr) {
         if (strcmp(tokens[0], "") == 0) continue;
         
         cmd("help") {
-            fmtWrite("Available: help, echo, cls, ping, uptime, sysinfo, mem, reboot, shutdown");
+            fmtWrite("Available: help, echo, cls, ping, uptime, sysinfo, mem, panic, reboot, shutdown");
         }
         cmd("echo") {
             for(int i = 1; i < tokenCount; i++) {
@@ -65,7 +65,7 @@ static void com(struct multibootInfo* mbPtr) {
             fmtWrite("%d s", seconds);
         }
         cmd("sysinfo") {
-            fmtWrite("lanternOS (%s) v%s (built %s)", __BUILD_ARCH__, VER, __BUILD_DATE__);
+            fmtWrite("lanternOS i386 v%s (built %s on %s)", VER, __BUILD_DATE__, __BUILD_ARCH__);
         }
         cmd("mem") {
             unsigned int total = getTotalMem(mbPtr);
@@ -76,8 +76,8 @@ static void com(struct multibootInfo* mbPtr) {
             else                                   fmtWrite("total = %dk, used = %dk, free = %dk", total, used, total - used);
         }
         cmd("panic") {
-            if (!(atoi(tokens[1]) <= 21 || atoi(tokens[1]) == 34)) fmtWrite("Unknown fault interrupt");
-            if (tokens[1]) sendInterrupt(atoi(tokens[1]));
+            if (atoi(tokens[1]) > 21 || atoi(tokens[1]) == 34 || atoi(tokens[1]) == 9 || atoi(tokens[1]) == 15 || atoi(tokens[1]) == 18 || atoi(tokens[1]) == 20) fmtWrite("Unknown fault interrupt");
+            if (tokenCount == 2) sendInterrupt(atoi(tokens[1]));
             else panic();
         }
         cmd("reboot")   reboot();
