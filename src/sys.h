@@ -1,7 +1,7 @@
 #ifndef LANTERN_SYS_H
 #define LANTERN_SYS_H
 
-struct multibootInfo {
+/*struct multibootInfo {
     unsigned int flags;
     unsigned int mem_lower;
     unsigned int mem_upper;
@@ -10,7 +10,7 @@ struct multibootInfo {
     unsigned int mods_count;
     unsigned int mods_addr;
     // tba
-} __attribute__((packed));
+} __attribute__((packed));*/
 
 struct Registers {
     unsigned int edi, esi, ebp, esp, ebx, edx, ecx, eax;
@@ -18,10 +18,22 @@ struct Registers {
     unsigned int eip, cs, eflags;
 };
 
+struct E820Entry {
+    unsigned long long base;
+    unsigned long long length;
+    unsigned int type;
+    unsigned int extended;
+} __attribute__((packed));
+
+struct MemoryInfo {
+    unsigned int entry_count;
+    struct E820Entry* entries;
+};
+
 // note: in kb
 unsigned int getUsedMem(void);
 // note: in kb
-unsigned int getTotalMem(struct multibootInfo* mbPtr);
+unsigned int getTotalMem(struct MemoryInfo* mem);
 void reboot(void);
 void shutdown(void);
 

@@ -11,6 +11,35 @@ mov [BOOT_DRIVE], dl    ; Save boot drive early
 
 jmp PMode
 
+; get mem via E820
+getMem:
+    xor ebx, ebx            ; ebx must be 0 to start
+    mov edx, 0x534D4150     ; magic number 'SMAP'
+    mov di, 0x9000          ; destination buffer offset
+    mov [memEntries], word 0
+
+.next_entry:
+    mov eax, 0xE820         ; BIOS Function
+    mov ecx, 24             ; buf size
+    int 0x15
+    jc .done                ; carry set means end of list or error
+
+    cmp eax, 0x534D4150     ; verify BIOS set eax to 'SMAP'
+    jne .error
+
+    add di, 24              ; move buffer pointer
+    inc word [memEntries]   ; count entries
+    test ebx, ebx           ; If ebx=0 list is finished
+    jnz .next_entry
+
+.done:
+    ret
+
+.error:
+    call badRead
+
+memEntries: dw 0
+
 BOOT_DRIVE db 0
 
 gdtStart: 
@@ -113,6 +142,9 @@ main:
     mov ss, ax
     mov esp, 0x90000
 
+    push 0x9000             ; ptr to entries
+    push dword [memEntries]; # of entries
+    
     jmp 0x10000
 
 ; pad to 512 b

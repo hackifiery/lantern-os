@@ -4,7 +4,7 @@
 #define SERIAL 1
 #define BUFFER_SIZE 256
 
-unsigned char COLOR = 0x0F;
+unsigned char COLOR = 0x02;
  //(15 << 4) | (0 & 0x0F);
 
 unsigned int cursorX = 0, cursorY = 0;

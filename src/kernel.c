@@ -68,6 +68,7 @@ static void com(struct multibootInfo* mbPtr) {
             fmtWrite("lanternOS i386 v%s (built %s on %s)", VER, __BUILD_DATE__, __BUILD_ARCH__);
         }
         cmd("mem") {
+            sendInterrupt(1); // TODO: fix mem function
             unsigned int total = getTotalMem(mbPtr);
             unsigned int used = getUsedMem();
             if (strcmp(tokens[1], "/m") == 0)      fmtWrite("total = %dm, used = %dm, free = %dm", total/1024, used/1024, (total - used)/1024);
@@ -91,16 +92,19 @@ static void com(struct multibootInfo* mbPtr) {
     }
 }
 
-void kmain(struct multibootInfo* mbPtr) {
-    //initIdt();
-    //initGdt();
+void kmain(unsigned int entryCount, struct E820Entry* entries) {
+    initIdt();
+    initGdt();
     clearScreen();
     initTimer(100);
     enableCursor(14, 15);
+    struct MemoryInfo mem;
+    mem.entry_count = entryCount;
+    mem.entries = entries;
     // __asm__ volatile("sti");
     fmtWrite("Welcome to lanternOS!\n");
     fmtWrite("Type 'help' for commands.\n\n");
-    for (;;) com(mbPtr);
+    for (;;) com(&mem);
 }
 
 /*void kmain() {

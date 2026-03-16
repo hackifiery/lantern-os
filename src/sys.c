@@ -13,9 +13,15 @@ unsigned int getUsedMem(void) {
     return used;
 }
 
-unsigned int getTotalMem(struct multibootInfo* mbPtr) {
-    unsigned int kb = mbPtr->mem_lower + mbPtr->mem_upper;
-    return kb;
+unsigned int getTotalMem(struct MemoryInfo* mem) {
+    unsigned long long total = 0;
+    for (unsigned int i = 0; i < mem->entry_count; i++) {
+        // Type 1 is Usable RAM
+        if (mem->entries[i].type == 1) {
+            total += mem->entries[i].length;
+        }
+    }
+    return (unsigned int)(total / 1024);
 }
 
 void reboot(void) {
