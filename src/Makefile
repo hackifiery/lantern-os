@@ -24,10 +24,8 @@ OBJS     := boot.o kernel.o io.o serial.o idt.o interrupts.o string_utils.o sys.
 all: $(BIN)
 
 $(BIN): $(OBJS)
-	$(LD) $(LDFLAGS) $(OBJS) -o $@
-ifeq ($(OS),Windows_NT)
-	$(OBJCOPY) -O elf32-i386 $@ $@
-endif
+	$(LD) $(LDFLAGS) $(OBJS) -o kern.elf
+	$(OBJCOPY) -O binary kern.elf $(BIN)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

@@ -92,8 +92,8 @@ static void com(struct multibootInfo* mbPtr) {
 }
 
 void kmain(struct multibootInfo* mbPtr) {
-    initIdt();
-    initGdt();
+    //initIdt();
+    //initGdt();
     clearScreen();
     initTimer(100);
     enableCursor(14, 15);
@@ -102,3 +102,22 @@ void kmain(struct multibootInfo* mbPtr) {
     fmtWrite("Type 'help' for commands.\n\n");
     for (;;) com(mbPtr);
 }
+
+/*void kmain() {
+    clearScreen();
+    unsigned short* vga = (unsigned short*)0xb8000;
+    vga[0] = 0x1f41; // Blue background, White 'A'
+
+    initSerial(); 
+    vga[1] = 0x1f42; // White 'B'
+
+    initGdt();
+    vga[2] = 0x1f43; // White 'C'
+
+    initIdt();
+    vga[3] = 0x1f44; // White 'D'
+
+    fmtWrite("hi");
+    
+    while(1) { __asm__ ("hlt"); }
+}*/

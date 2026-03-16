@@ -108,7 +108,7 @@ void initTimer(unsigned int frequency) {
 }
 
 void fault(struct Registers *r) {
-    COLOR = vgaColor(RED, BLACK);
+    COLOR = vgaColor(WHITE, BLUE);
     clearScreen();
     fmtWrite("--- KERNEL PANIC!!! ---\n\n");
     

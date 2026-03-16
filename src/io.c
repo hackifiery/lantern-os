@@ -4,7 +4,8 @@
 #define SERIAL 1
 #define BUFFER_SIZE 256
 
-unsigned char COLOR = 0x02; // vgaColor(GREEN, BLACK);
+unsigned char COLOR = 0x0F;
+ //(15 << 4) | (0 & 0x0F);
 
 unsigned int cursorX = 0, cursorY = 0;
 

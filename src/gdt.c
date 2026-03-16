@@ -1,6 +1,6 @@
 #include "gdt.h"
 
-// We need 3 entries: Null, Code, and Data
+// 3 entries: Null, Code, and Data
 struct GdtEntry gdt[3];
 struct GdtPtr gdtp;
 

@@ -10,10 +10,9 @@ extern kmain
 global _start
 global halt
 
-halt:
-    hlt
 
 _start:
+    mov dword [0xb8004], 0x2f4c2f4c
     cli                ; Disable interrupts during setup
     mov esp, stack_top ; Set up stack pointer
     extern initIdt
@@ -28,6 +27,10 @@ _start:
 .hang:
     hlt
     jmp .hang
+
+
+halt:
+    hlt
 
 section .bss
 align 16

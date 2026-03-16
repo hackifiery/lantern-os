@@ -1,37 +1,29 @@
-MBR_BIN = /usr/share/syslinux/mbr.bin
+BOOT_SRC = bl/bootloader.asm
+BOOT_BIN = bl/bootloader.bin
+KERNEL_BIN = src/kern.bin
+IMG = lanternos.img
 
-.PHONY: all src img run
+.PHONY: all src img run clean
 
-all: src run
+all: src img run
+kern: src kernel
 
 src:
 	$(MAKE) -C src all
 
-ifneq ($(OS),Windows_NT)
 img: src
-	dd if=/dev/zero of=lanternos.img bs=1M count=10
-	mkfs.vfat -F 16 lanternos.img
-	syslinux --install lanternos.img
-	mkdir -p mnt
-	sudo mount -o loop lanternos.img mnt
+	nasm -f bin $(BOOT_SRC) -o $(BOOT_BIN)
+	
+	dd if=/dev/zero of=$(IMG) bs=1k count=1440
+	dd if=$(BOOT_BIN) of=$(IMG) conv=notrunc
+	dd if=$(KERNEL_BIN) of=$(IMG) seek=1 conv=notrunc
 
-	sudo cp /usr/share/syslinux/mboot.c32 mnt/
-	sudo cp /usr/share/syslinux/libcom32.c32 mnt/
-	sudo cp src/kern.bin mnt/kern.bin
-	echo -e "default lantern\n  label lantern\n say Loading lanternOS...\n  kernel /mboot.c32\n  append /kern.bin" | sudo tee mnt/syslinux.cfg
-	sudo umount mnt
-run: src img
-	qemu-system-i386 -drive format=raw,file=lanternos.img -m 4
-else
-img: src
-run: src
-	qemu-system-i386 -kernel src/kern.bin
-endif
-
+run: img
+	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=floppy -m 16
+kernel: src
+	qemu-system-i386 -kernel src/kern.bin -m 2
 
 clean:
 	$(MAKE) -C src clean
-	rm -f lanternos.img
-	rm -rf mnt
-	rm -f src/*.bin
-	rm -f *.bin
+	rm -f $(IMG)
+	rm -f $(BOOT_BIN)
