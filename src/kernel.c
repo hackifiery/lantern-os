@@ -33,7 +33,7 @@ static int tokenize(char* str, char** tokens, int max_tokens) {
     return count;
 }
 
-static void com(struct multibootInfo* mbPtr) {
+static void com(struct MemoryInfo* mbPtr) {
     char input[256];
     char* tokens[16]; 
 

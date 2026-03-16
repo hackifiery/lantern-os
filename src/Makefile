@@ -6,13 +6,13 @@ ifeq ($(OS),Windows_NT)
     LD      := ld
 	
     LDFLAGS := -m i386pe -T linker.ld
-    OBJCOPY := objcopy
 else
     CC      := i686-elf-gcc
     LD      := i686-elf-ld
     LDFLAGS := -m elf_i386 -T linker.ld
 endif
 
+OBJCOPY := objcopy
 DATE     := $(shell date)
 ARCH     := $(shell gcc -dumpmachine)
 ASFLAGS  := -f elf32
