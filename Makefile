@@ -3,7 +3,7 @@ BOOT_BIN = bl/bootloader.bin
 KERNEL_BIN = src/kern.bin
 IMG = lanternos.img
 
-.PHONY: all src img run clean
+.PHONY: all
 
 all: src img
 test: all run

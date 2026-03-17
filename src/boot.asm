@@ -13,7 +13,7 @@ extern initIdt
 extern initSerial
 
 _start:
-    mov dword [0xb8004], 0x2f4c2f4c
+    ; DEBUG: mov dword [0xb8004], 0x2f4c2f4c
     cli                ; Disable interrupts during setup
     ; save the arguments passed by the bootloader
     pop eax
