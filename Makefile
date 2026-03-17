@@ -5,8 +5,8 @@ IMG = lanternos.img
 
 .PHONY: all src img run clean
 
-all: src img run
-kern: src kernel
+all: src img
+test: all run
 
 src:
 	$(MAKE) -C src all
@@ -19,9 +19,7 @@ img: src
 	dd if=$(KERNEL_BIN) of=$(IMG) seek=1 conv=notrunc
 
 run: img
-	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=floppy -m 16 -display curses -vga std # -nographic -serial mon:stdio
-kernel: src
-	qemu-system-i386 -kernel src/kern.bin -m 2
+	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=floppy -m 1 #-display curses -vga std -nographic -serial mon:stdio
 
 clean:
 	$(MAKE) -C src clean
