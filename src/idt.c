@@ -132,7 +132,7 @@ void fault(struct Registers *r) {
             //  the address is in the CR2 register
             unsigned int faulting_addr;
             __asm__ volatile("mov %%cr2, %0" : "=r" (faulting_addr));
-            fmtWrite("\nAddress: 0x%x", faulting_addr);
+            fmtWrite("\nAddress: 0x%08x", faulting_addr);
             break;
         case 16: fmtWrite("x87 Floating-Point Exception (#MF)"); break;
         case 17: fmtWrite("Alignment Check (#AC)"); break;
@@ -146,8 +146,10 @@ void fault(struct Registers *r) {
     }
 
     fmtWrite("\n\nError Code: %d", r->err_code);
-    fmtWrite("\nEIP: 0x%x  CS: 0x%x", r->eip, r->cs);
-    fmtWrite("\nEAX: 0x%x  EBX: 0x%x", r->eax, r->ebx);
+    // edi, esi, ebp, esp, ebx, edx, ecx, eax
+    fmtWrite("\nEIP: 0x%08x  CS: 0x%08x\n", r->eip, r->cs);
+    fmtWrite("EAX: 0x%08x EBX: 0x%08x ECX: 0x%08x EDX: 0x%08x\n", r->eax, r->ebx, r->ecx, r->edx);
+    fmtWrite("EDI: 0x%08x ESI: 0x%08x EBP: 0x%08x ESP: 0x%08x\n", r->edi, r->edi, r->ebp, r->esp);
 
     fmtWrite("\n\nSystem Halted.");
     disableCursor();

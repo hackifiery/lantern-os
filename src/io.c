@@ -207,11 +207,47 @@ static int intToStr(char *dest, int n) {
     return i;
 }
 
+static int hexToStr(char *dest, unsigned int n, int width) {
+    char *hexChars = "0123456789ABCDEF";
+    char tmp[9]; 
+    int i = 0, j = 0;
+
+    if (n == 0) {
+        tmp[j++] = '0';
+    } else {
+        while (n > 0) {
+            tmp[j++] = hexChars[n % 16];
+            n /= 16;
+        }
+    }
+
+    // only pads if j (curr length) is less than width
+    while (j < width && j < 8) {
+        tmp[j++] = '0';
+    }
+
+    int count = j;
+    while (--j >= 0) {
+        dest[i++] = tmp[j];
+    }
+    return count;
+}
+
 static void vsfmtWrite(char* str, const char *fmt, va_list args) {
     int ptr = 0;
     for (int i = 0; fmt[i] != '\0'; i++) {
         if (fmt[i] == '%') {
-            i++;
+            i++; // skip '%'
+            
+            int width = 0; // no padding (default)
+
+            // check for padding
+            if (fmt[i] == '0') {
+                i++;
+                width = fmt[i] - '0';
+                i++;
+            }
+
             switch (fmt[i]) {
                 case 's': {
                     char *s = va_arg(args, char*);
@@ -224,6 +260,11 @@ static void vsfmtWrite(char* str, const char *fmt, va_list args) {
                 }
                 case 'c': {
                     str[ptr++] = (char)va_arg(args, int);
+                    break;
+                }
+                case 'x': {
+                    // uses the width we parsed (will be 0 if no len was found)
+                    ptr += hexToStr(&str[ptr], va_arg(args, unsigned int), width);
                     break;
                 }
                 case '%': {

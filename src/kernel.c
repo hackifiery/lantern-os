@@ -78,7 +78,7 @@ static void com(struct MemoryInfo* mbPtr) {
         if (strcmp(tokens[0], "") == 0) continue;
 
         cmd("help") {
-            fmtWrite("Available: help, echo, cls, ping, uptime, sysinfo, mem, panic, reboot, shutdown");
+            fmtWrite("Available: help, echo, cls, calc, ping, uptime, sysinfo, mem, panic, reboot, shutdown");
         }
         cmd("echo") {
             for(int i = 1; i < tokenCount; i++) {
@@ -143,7 +143,7 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
     mem.entry_count = entryCount;
     mem.entries = entries;
 
-    fmtWrite("Welcome to the lanternCOM shell!\nReport bugs at https://github.com/hackifiery/lantern-os\n");
+    fmtWrite("Welcome to the lanternCOM shell!\nReport bugs at https://github.com/hackifiery/lantern-os.\n");
     fmtWrite("Type 'help' for commands.\n\n");
     #undef init
     for (;;) com(&mem);
