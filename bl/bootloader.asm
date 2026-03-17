@@ -1,5 +1,20 @@
 [org 0x7c00]
 
+jmp stuff              ; simulate section .text (this is a flat binary)
+
+msgStart   db "Lightbulb bootloader v0.0.1. Copyright (c) 2026 hackifiery, all rights reserved.", 0
+;msgStart   db 0
+msgLoad    db "Kernel...", 0
+msgMem     db "Memory...", 0
+msgA20     db "A20...", 0
+msgCli     db "Interrupts...", 0
+msgLgdt    db "GDT...", 0
+msgPmode   db "Protected mode and transfer to kernel...", 0
+
+msgOk      db "ok", 13, 10, 0
+
+stuff:
+
 ; setup stack
 xor ax, ax
 mov ds, ax
@@ -11,6 +26,9 @@ mov sp, bp
 mov [BOOT_DRIVE], dl    ; Save boot drive (bios puts it in dl)
 KERNEL equ 0x10000
 MMAP   equ 0x7000
+
+mov si, msgStart
+call log
 
 jmp PMode
 
@@ -28,7 +46,22 @@ gdtDescriptor:
     dw gdtEnd - gdtStart - 1
     dd gdtStart         ; NASM handles the 0x7c00 offset because of [org]
 
+log:                    ; logs a msg to the screen. needs: si (string)
+    pusha
+    mov ah, 0x0e
+.loop:
+    lodsb               ; load byte at ds:si into al & increment si
+    test al, al         ; test for null char
+    jz .done
+    int 0x10
+    jmp .loop
+.done:
+    popa
+    ret
+
 getMem:
+    mov si, msgMem
+    call log
     push es
     mov ax, 0
     mov es, ax
@@ -52,16 +85,30 @@ getMem:
 .done:
     mov [MMAP], bp          ; Save count at physical 0x7000
     pop es                  ; Restore ES to 0x1000
+
+    mov si, msgOk
+    call log
+
     ret
     
 
 A20:                     ; fast method
+    mov si, msgA20
+    call log
+
     in al, 0x92
     or al, 2
     out 0x92, al
+
+    mov si, msgOk
+    call log
+
     ret
 
 loadKern:                ; needs: al (# of sectors to read), es:bx (buffer)
+    mov si, msgLoad
+    call log
+    
     pusha
     movzx si, al         ; get sectors to read
     mov ch, 0            ; cyl 0
@@ -72,6 +119,10 @@ loadKern:                ; needs: al (# of sectors to read), es:bx (buffer)
     int 0x13             ; disk read interrupt
     jc readFail
     popa
+
+    mov si, msgOk
+    call log
+
     ret
 
 readFail:                ; prints a '?'
@@ -89,13 +140,32 @@ PMode:
 
     call getMem
     call A20
+
+    mov si, msgCli
+    call log
+
     cli
+
+    mov si, msgOk
+    call log
+
+    mov si, msgLgdt
+    call log
+
     lgdt [gdtDescriptor] ; get gdt
 
+    mov si, msgOk
+    call log
+
+    mov si, msgPmode
+    call log
+    mov si, msgOk
+    call log
     ; enter protected mode
     mov eax, cr0 
     or al, 1
     mov cr0, eax
+
     jmp 08h:main
 
 main:
@@ -112,7 +182,7 @@ main:
     push MMAP + 4      ; arg 2 (e820 entries)
     movzx eax, word [MMAP] ; get the 16-bit count and zero-extend it to 32-bit
     push eax           ;a arg 1 (entryCount)
-
+    ; DEBUG: hlt
     call KERNEL           ; i hope...
 
 ; padding + boot sig

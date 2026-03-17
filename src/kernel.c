@@ -93,21 +93,32 @@ static void com(struct MemoryInfo* mbPtr) {
 }
 
 void kmain(unsigned int entryCount, struct E820Entry* entries) {
-    initIdt();
-    initGdt();
+    fmtWrite("\n");
+    moveCursor(0,0);
     clearScreen();
-    __asm__ volatile("sti");
-    initTimer(100);
+    fmtWrite("LanternOS kernel v%s, copyright (c) 2026 hackifiery. All rights reserved.\n\n", VER);
+    #define init(f, name) \
+        fmtWrite("Initializing %s...", name); \
+        f; \
+        fmtWrite("ok\n")
+    init(initIdt(), "IDT");
+    init(initGdt(), "GDT");
+    init(__asm__ volatile("sti"), "interrupts");
+    init(initTimer(100), "timer");
+
     enableCursor(14, 15);
     struct MemoryInfo mem;
     mem.entry_count = entryCount;
     mem.entries = entries;
-    fmtWrite("Welcome to lanternOS!\n");
+
+    fmtWrite("\nWelcome to lanternOS!\n");
     fmtWrite("Type 'help' for commands.\n\n");
+    #undef init
     for (;;) com(&mem);
 }
 
-/*void kmain() {
+/* DEBUG
+void kmain() {
     clearScreen();
     unsigned short* vga = (unsigned short*)0xb8000;
     vga[0] = 0x1f41; // Blue background, White 'A'
@@ -124,4 +135,5 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
     fmtWrite("hi");
     
     while(1) { __asm__ ("hlt"); }
-}*/
+}
+*/
