@@ -19,7 +19,7 @@ img: src
 	dd if=$(KERNEL_BIN) of=$(IMG) seek=1 conv=notrunc
 
 run: img src
-	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=floppy -m 1 #-display curses -vga std -nographic -serial mon:stdio
+	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=floppy -m 16 #-display curses -vga std -nographic -serial mon:stdio
 
 clean:
 	make -C src clean

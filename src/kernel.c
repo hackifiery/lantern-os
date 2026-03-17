@@ -33,20 +33,50 @@ static int tokenize(char* str, char** tokens, int max_tokens) {
     return count;
 }
 
+void calc(void) {
+    char input[256];
+    char* tokens[16];
+    int res = 0;
+    for (;;) {
+        fmtWrite("calc -> ");
+        fmtGet("%s", input);
+        int tokenCount = tokenize(input, tokens, 16);
+        for (unsigned int i = 0; i < tokenCount; i++) {
+            // fmtWrite("token %d: %s\n", i, tokens[i]);
+            static char res_str[16] = ""; // static is needed here to avoid stack corruption!!!
+            sfmtWrite(res_str, "%d", res);
+            if (strcmp(tokens[i], "$") == 0) {
+                // fmtWrite("Replacing $ with %s\n", res_str);
+                tokens[i] = res_str;
+            }
+        }
+        if (tokenCount == 0) continue;
+        #define cmd(s) else if (strcmp(tokens[0], s) == 0)
+        cmd("add") res = atoi(tokens[1]) + atoi(tokens[2]);
+        cmd("sub") res = atoi(tokens[1]) - atoi(tokens[2]);
+        cmd("mul") res = atoi(tokens[1]) * atoi(tokens[2]);
+        cmd("div") res = atoi(tokens[1]) / atoi(tokens[2]);
+        cmd("exit") return;
+        else {fmtWrite("Unknown operation: %s\n", tokens[0]); continue;}
+        fmtWrite("%d\n", res);
+        #undef cmd
+    }
+}
+
 static void com(struct MemoryInfo* mbPtr) {
     char input[256];
-    char* tokens[16]; 
+    char* tokens[16];
 
     for(;;) {
         fmtWrite("lanternCOM -> ");
-        fmtGet("%s", input); 
+        fmtGet("%s", input);
 
         int tokenCount = tokenize(input, tokens, 16);
         if (tokenCount == 0) continue;
         #define cmd(s) else if (strcmp(tokens[0], s) == 0)
 
         if (strcmp(tokens[0], "") == 0) continue;
-        
+
         cmd("help") {
             fmtWrite("Available: help, echo, cls, ping, uptime, sysinfo, mem, panic, reboot, shutdown");
         }
@@ -68,13 +98,15 @@ static void com(struct MemoryInfo* mbPtr) {
             fmtWrite("lanternOS i386 v%s (built %s on %s)", VER, __BUILD_DATE__, __BUILD_ARCH__);
         }
         cmd("mem") {
-            // fmtWrite("Still workin' on it...\n"); continue; // TODO: fix mem function
             unsigned int total = getTotalMem(mbPtr);
             unsigned int used = getUsedMem();
             if (strcmp(tokens[1], "/m") == 0)      fmtWrite("total = %dm, used = %dm, free = %dm", total/1024, used/1024, (total - used)/1024);
             else if (strcmp(tokens[1], "/g") == 0) fmtWrite("total = %dg, used = %dg, free = %dg", total/1024/1024, used/1024/1024, (total - used)/1024/1024);
             else if (strcmp(tokens[1], "/b") == 0) fmtWrite("total = %db, used = %db, free = %db", total*1024, used*1024, (total - used)*1024);
             else                                   fmtWrite("total = %dk, used = %dk, free = %dk", total, used, total - used);
+        }
+        cmd("calc") {
+            calc();
         }
         cmd("panic") {
             if (atoi(tokens[1]) > 21 || atoi(tokens[1]) == 34 || atoi(tokens[1]) == 9 || atoi(tokens[1]) == 15 || atoi(tokens[1]) == 18 || atoi(tokens[1]) == 20) fmtWrite("Unknown fault interrupt");
@@ -96,7 +128,7 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
     fmtWrite("\n");
     moveCursor(0,0);
     clearScreen();
-    fmtWrite("LanternOS kernel v%s, copyright (c) 2026 hackifiery. All rights reserved.\n\n", VER);
+    fmtWrite("LanternOS v%s, copyright (c) 2026 hackifiery. All rights reserved.\n\n", VER);
     #define init(f, name) \
         fmtWrite("Initializing %s...", name); \
         f; \
@@ -111,7 +143,7 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
     mem.entry_count = entryCount;
     mem.entries = entries;
 
-    fmtWrite("\nWelcome to lanternOS!\n");
+    fmtWrite("Welcome to the lanternCOM shell!\nReport bugs at https://github.com/hackifiery/lantern-os\n");
     fmtWrite("Type 'help' for commands.\n\n");
     #undef init
     for (;;) com(&mem);
@@ -123,7 +155,7 @@ void kmain() {
     unsigned short* vga = (unsigned short*)0xb8000;
     vga[0] = 0x1f41; // Blue background, White 'A'
 
-    initSerial(); 
+    initSerial();
     vga[1] = 0x1f42; // White 'B'
 
     initGdt();
@@ -133,7 +165,7 @@ void kmain() {
     vga[3] = 0x1f44; // White 'D'
 
     fmtWrite("hi");
-    
+
     while(1) { __asm__ ("hlt"); }
 }
 */
