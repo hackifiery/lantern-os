@@ -10,6 +10,7 @@ mov sp, bp
 
 mov [BOOT_DRIVE], dl    ; Save boot drive (bios puts it in dl)
 KERNEL equ 0x10000
+MMAP   equ 0x8000
 
 jmp PMode
 
@@ -27,7 +28,29 @@ gdtDescriptor:
     dw gdtEnd - gdtStart - 1
     dd gdtStart         ; NASM handles the 0x7c00 offset because of [org]
 
-A20:                    ; fast method
+getMem:
+    mov di, MMAP+4      ; space for the entry count @ start
+    mov ebx, 0
+    mov bp, 0
+    mov edx, 0x0534D4150 ; magic word
+.loop:
+    mov eax, 0xe820
+    mov ecx, 24          ; request 24 b
+    int 0x15
+    jc short readFail
+    cmp eax, edx         ; eax should be the magic word now
+    jne short readFail
+    test ebx, ebx               ; If ebx is 0, list is finished
+    je .done
+    add di, 24                  ; move buffer pointer
+    inc bp                      ; increment entry count
+    jmp .loop
+.done:
+    mov [MMAP], bp
+    ret
+    
+
+A20:                     ; fast method
     in al, 0x92
     or al, 2
     out 0x92, al
@@ -59,6 +82,7 @@ PMode:
     mov al, 100          ; 100 sectors, 50kb
     call loadKern
 
+    call getMem
     call A20
     cli
     lgdt [gdtDescriptor] ; get gdt
@@ -80,7 +104,11 @@ main:
     mov ss, ax
     mov esp, 0x90000     ; better 32-bit stack addr
 
-    jmp KERNEL           ; i hope...
+    push MMAP + 4      ; arg 2 (e820 entries)
+    movzx eax, word [MMAP] ; get the 16-bit count and zero-extend it to 32-bit
+    push eax           ;a arg 1 (entryCount)
+
+    call KERNEL           ; i hope...
 
 ; padding + boot sig
 times 510-($-$$) db 0

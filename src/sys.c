@@ -15,9 +15,12 @@ unsigned int getUsedMem(void) {
 
 unsigned int getTotalMem(struct MemoryInfo* mem) {
     unsigned long long total = 0;
+        fmtWrite("\nmem entry_count is %d\n", mem->entry_count);
     for (unsigned int i = 0; i < mem->entry_count; i++) {
-        // Type 1 is Usable RAM
+        fmtWrite("checking entry %d\n", i);
+        // Type 1 is = good ram
         if (mem->entries[i].type == 1) {
+            fmtWrite("found ram\n");
             total += mem->entries[i].length;
         }
     }

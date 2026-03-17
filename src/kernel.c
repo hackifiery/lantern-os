@@ -68,7 +68,7 @@ static void com(struct MemoryInfo* mbPtr) {
             fmtWrite("lanternOS i386 v%s (built %s on %s)", VER, __BUILD_DATE__, __BUILD_ARCH__);
         }
         cmd("mem") {
-            sendInterrupt(1); // TODO: fix mem function
+            // fmtWrite("Still workin' on it...\n"); continue; // TODO: fix mem function
             unsigned int total = getTotalMem(mbPtr);
             unsigned int used = getUsedMem();
             if (strcmp(tokens[1], "/m") == 0)      fmtWrite("total = %dm, used = %dm, free = %dm", total/1024, used/1024, (total - used)/1024);
@@ -96,12 +96,12 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
     initIdt();
     initGdt();
     clearScreen();
+    __asm__ volatile("sti");
     initTimer(100);
     enableCursor(14, 15);
     struct MemoryInfo mem;
     mem.entry_count = entryCount;
     mem.entries = entries;
-    // __asm__ volatile("sti");
     fmtWrite("Welcome to lanternOS!\n");
     fmtWrite("Type 'help' for commands.\n\n");
     for (;;) com(&mem);
