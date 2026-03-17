@@ -15,15 +15,20 @@ unsigned int getUsedMem(void) {
 
 unsigned int getTotalMem(struct MemoryInfo* mem) {
     unsigned long long total = 0;
-        fmtWrite("\nmem entry_count is %d\n", mem->entry_count);
+    // fmtWrite("\nmem entry_count is %d\n", mem->entry_count);
     for (unsigned int i = 0; i < mem->entry_count; i++) {
-        fmtWrite("checking entry %d\n", i);
+        // fmtWrite("checking entry %d, type is %d, with size %d bytes\n", i, mem->entries[i].type, sizeof(mem->entries[i]));
         // Type 1 is = good ram
         if (mem->entries[i].type == 1) {
-            fmtWrite("found ram\n");
+            // fmtWrite("found ram\n");
             total += mem->entries[i].length;
         }
     }
+    // fmtWrite("\n");
+    /*nsigned char* raw = (unsigned char*)0x7004;
+    for(int i = 0; i < 24; i++) {
+        fmtWrite("%d ", raw[i]);
+    }*/
     return (unsigned int)(total / 1024);
 }
 

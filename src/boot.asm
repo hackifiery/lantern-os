@@ -9,18 +9,24 @@ section .text
 extern kmain
 global _start
 global halt
-
+extern initIdt
+extern initSerial
 
 _start:
     mov dword [0xb8004], 0x2f4c2f4c
     cli                ; Disable interrupts during setup
-    mov esp, stack_top ; Set up stack pointer
-    extern initIdt
-    extern initSerial
+    ; save the arguments passed by the bootloader
+    pop eax
+    pop ebx            ; entryCount
+    pop ecx            ; entries
+
+    mov esp, stack_top ; Reset stack for the kernel
+
+    push ecx
+    push ebx
 
     call initSerial
     call initIdt
-    push ebx            ; multiboot
     call kmain
     
     hlt

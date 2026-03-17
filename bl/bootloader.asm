@@ -10,7 +10,7 @@ mov sp, bp
 
 mov [BOOT_DRIVE], dl    ; Save boot drive (bios puts it in dl)
 KERNEL equ 0x10000
-MMAP   equ 0x8000
+MMAP   equ 0x7000
 
 jmp PMode
 
@@ -29,24 +29,29 @@ gdtDescriptor:
     dd gdtStart         ; NASM handles the 0x7c00 offset because of [org]
 
 getMem:
-    mov di, MMAP+4      ; space for the entry count @ start
+    push es
+    mov ax, 0
+    mov es, ax
+    mov di, MMAP+4      ; now writes to physical 0x7004
     mov ebx, 0
     mov bp, 0
-    mov edx, 0x0534D4150 ; magic word
+    mov edx, 0x0534D4150; magic word
 .loop:
     mov eax, 0xe820
-    mov ecx, 24          ; request 24 b
+    mov [es:di + 20], dword 1 ; use es override to be safe
+    mov ecx, 24
     int 0x15
-    jc short readFail
-    cmp eax, edx         ; eax should be the magic word now
-    jne short readFail
-    test ebx, ebx               ; If ebx is 0, list is finished
-    je .done
-    add di, 24                  ; move buffer pointer
-    inc bp                      ; increment entry count
-    jmp .loop
+    jc .done
+    cmp eax, edx
+    jne .done
+    
+    add di, 24
+    inc bp
+    test ebx, ebx
+    jnz .loop
 .done:
-    mov [MMAP], bp
+    mov [MMAP], bp          ; Save count at physical 0x7000
+    pop es                  ; Restore ES to 0x1000
     ret
     
 

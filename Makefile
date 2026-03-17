@@ -19,7 +19,7 @@ img: src
 	dd if=$(KERNEL_BIN) of=$(IMG) seek=1 conv=notrunc
 
 run: img
-	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=floppy -m 16 -display curses
+	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=floppy -m 16 -display sdl
 kernel: src
 	qemu-system-i386 -kernel src/kern.bin -m 2
 
