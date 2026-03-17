@@ -95,7 +95,7 @@ static void com(struct MemoryInfo* mbPtr) {
 void kmain(unsigned int entryCount, struct E820Entry* entries) {
     fmtWrite("\n");
     moveCursor(0,0);
-    //clearScreen();
+    clearScreen();
     fmtWrite("LanternOS kernel v%s, copyright (c) 2026 hackifiery. All rights reserved.\n\n", VER);
     #define init(f, name) \
         fmtWrite("Initializing %s...", name); \
