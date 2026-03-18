@@ -13,3 +13,24 @@ lanternCOM is the basic shell for LanternOS. It only has a couple of commands so
 - `calc`: a simple calculator.
 - `panic [code]`: Triggers a kernel panic with an optional fault code.
 - `reboot` and `shutdown`: self-explanitory
+
+## Building
+### Prereqs
+- An `i686-elf` cross toolchain (prefferably, native toolchains can also be used, i think...)
+    - `gcc` w/c99+ support
+    - `ld`
+    - `objcopy`
+- `nasm`
+- `make`
+- `qemu-system-i386` (if you want to test out the built image)
+### Linux
+To build, simply run
+```sh
+make
+```
+To run the image in qemu, run
+```
+make run
+```
+### Windows
+If you're on windows, you have 2 options: use WSL and build for linux, or use some minGW toolchain (only cygwin has been tested). The instructions and prerequisites are the same as linux.
