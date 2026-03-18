@@ -1,6 +1,8 @@
 #ifndef LANTERN_IDT_H
 #define LANTERN_IDT_H
 
+#include "sys.h"
+
 struct idtEntry {
     unsigned short base_lo;    // Lower 16 bits of handler address
     unsigned short sel;        // Kernel segment selector (usually 0x08)
@@ -15,8 +17,9 @@ struct idtPtr {
 } __attribute__((packed));
 
 extern void loadIdt(unsigned int idtPtr_address);
-extern void panic(void);
+extern void userPanic(void);
 extern void sendInterrupt(unsigned char n);
+void interruptDispatcher(struct Registers *r);
 extern volatile unsigned int sysTicks;
 
 void initTimer(unsigned int frequency);

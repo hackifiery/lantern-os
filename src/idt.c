@@ -35,12 +35,13 @@ void initIdt(void) {
     extern void isr0();
     extern void isr1();
     // extern void isr2();
-    extern void isr3();
+    // extern void isr3();
     extern void isr4();
     extern void isr5();
     extern void isr6();
     extern void isr7();
     extern void isr8();
+    // extern void isr9();
     extern void isr10();
     extern void isr11();
     extern void isr12();
@@ -58,12 +59,13 @@ void initIdt(void) {
     setIdtGate(0, (unsigned int)isr0);
     setIdtGate(1, (unsigned int)isr1);
     // setIdtGate(1, (unsigned int)isr2);
-    setIdtGate(3, (unsigned int)isr3);
+    // setIdtGate(3, (unsigned int)isr3);
     setIdtGate(4, (unsigned int)isr4);
     setIdtGate(5, (unsigned int)isr5);
     setIdtGate(6, (unsigned int)isr6);
     setIdtGate(7, (unsigned int)isr7);
     setIdtGate(8, (unsigned int)isr8);
+    // setIdtGate(9, (unsigned int)isr9);
     setIdtGate(10, (unsigned int)isr10);
     setIdtGate(11, (unsigned int)isr11);
     setIdtGate(12, (unsigned int)isr12);
@@ -89,10 +91,15 @@ void initIdt(void) {
     loadIdt((unsigned int)&idtp);
 }
 
-void irqHandler(void) {
-    sysTicks++;
-    // Send End of Interrupt (EOI) to the PIC chip
-    outb(0x20, 0x20); 
+void irqHandler(struct Registers *r) {
+    // we must send eoi to the slave first
+    if (r->int_no >= 40) {
+        outb(0xA0, 0x20);
+    }
+    outb(0x20, 0x20);
+    if (r->int_no == 32) {
+        sysTicks++;
+    }
 }
 
 void initTimer(unsigned int frequency) {
@@ -116,13 +123,13 @@ void fault(struct Registers *r) {
     switch(r->int_no) {
         case 0:  fmtWrite("Division Error (#DE)"); break;
         case 1:  fmtWrite("Debug Exception (#DB)"); break;
-        case 3:  fmtWrite("Breakpoint (#BP)"); break;
+        // case 3:  fmtWrite("Breakpoint (#BP)"); break;
         case 4:  fmtWrite("Overflow (#OF)"); break;
         case 5:  fmtWrite("BOUND Range Exceeded (#BR)"); break;
         case 6:  fmtWrite("Invalid Opcode (#UD)"); break;
         case 7:  fmtWrite("Device Not Available (#NM)"); break;
         case 8:  fmtWrite("Double Fault (#DF)"); break;
-        case 9:  fmtWrite("Coprocessor Segment Overrun"); break;
+        // case 9:  fmtWrite("Coprocessor Segment Overrun"); break;
         case 10: fmtWrite("Invalid TSS (#TS)"); break;
         case 11: fmtWrite("Segment Not Present (#NP)"); break;
         case 12: fmtWrite("Stack-Segment Fault (#SS)"); break;
@@ -138,20 +145,35 @@ void fault(struct Registers *r) {
         case 17: fmtWrite("Alignment Check (#AC)"); break;
         case 19: fmtWrite("SIMD Floating-Point Exception (#XM)"); break;
         case 21: fmtWrite("Control Protection Exception (#CP)"); break;
-        case 34: fmtWrite("User-thrown Exception"); break;
+        case 34: fmtWrite("User-thrown Exception (#UT)"); break;
         
         default:
             fmtWrite("Unknown Exception #%d", r->int_no);
             break;
     }
 
-    fmtWrite("\n\nError Code: %d", r->err_code);
+    fmtWrite("\n\nINT: 0x%02x (%d)  ERR: 0x%x\n", r->int_no, r->int_no, r->err_code);
     // edi, esi, ebp, esp, ebx, edx, ecx, eax
     fmtWrite("\nEIP: 0x%08x  CS: 0x%08x\n", r->eip, r->cs);
-    fmtWrite("EAX: 0x%08x EBX: 0x%08x ECX: 0x%08x EDX: 0x%08x\n", r->eax, r->ebx, r->ecx, r->edx);
-    fmtWrite("EDI: 0x%08x ESI: 0x%08x EBP: 0x%08x ESP: 0x%08x\n", r->edi, r->edi, r->ebp, r->esp);
+    fmtWrite("EAX: 0x%08x EBX: 0x%08x\nECX: 0x%08x EDX: 0x%08x\n", r->eax, r->ebx, r->ecx, r->edx);
+    fmtWrite("EDI: 0x%08x ESI: 0x%08x\nEBP: 0x%08x ESP: 0x%08x\n", r->edi, r->esi, r->ebp, r->esp);
 
     fmtWrite("\n\nSystem Halted.");
     disableCursor();
     halt();
+}
+
+void interruptDispatcher(struct Registers *r) {
+    if (r->int_no >= 32 && r->int_no < 48 && r->int_no != 34) {
+        // irq
+        if (r->int_no == 33) {
+            keyboardHandler();
+        }
+        else {
+            irqHandler(r);
+        }
+    }
+    else {
+        fault(r); 
+    }
 }

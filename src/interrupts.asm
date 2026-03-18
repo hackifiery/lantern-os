@@ -2,11 +2,11 @@
 global loadIdt
 global irq0
 global irq1
-global panic
+global userPanic
 global sendInterrupt
 extern irqHandler
 extern keyboardHandler
-extern fault
+extern interruptDispatcher
 
 ; exceptions w/o error code
 %macro ISR_NOERRCODE 1
@@ -49,8 +49,18 @@ ISR_NOERRCODE 19 ; simd fp exceptions
 ISR_ERRCODE   21 ; control protection exceptions
 ISR_NOERRCODE 34 ; user-thrown exception
 
-panic:
+userPanic:
+    ;pushfd               ; eflags
+    ;push dword 0x08      ; cs
+    ;push dword .halt     ; dummy
+    ;push dword 0xBADBEEF ; don't mind me...
+    ;push dword 34        ; int
+    ;jmp isr_common_stub
     int 34
+
+.halt:
+    hlt
+    jmp .halt
 
 sendInterrupt:
     push ebp
@@ -68,7 +78,7 @@ isr_common_stub:
     pushad
     push esp        ; PUSH THE POINTER to the start of the registers on the stack
     
-    call fault
+    call interruptDispatcher
 
     add esp, 4      ; Clean up the 'push esp'
     popad           ; Restore registers
@@ -81,15 +91,14 @@ loadIdt:
     sti               ; interrupts
     ret
 
+; timer
 irq0:
-    pushad            ; Push EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI
-    call irqHandler
-    popad             ; Restore them all
-    iretd
+    push 0      ; Dummy error code
+    push 32     ; IRQ 0 maps to Int 32
+    jmp isr_common_stub
 
-
+; keyboard
 irq1:
-    pushad
-    call keyboardHandler
-    popad
-    iretd
+    push 0      ; Dummy error code
+    push 33     ; IRQ 1 maps to Int 33
+    jmp isr_common_stub

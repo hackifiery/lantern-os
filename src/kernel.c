@@ -111,7 +111,7 @@ static void com(struct MemoryInfo* mbPtr) {
         cmd("panic") {
             if (atoi(tokens[1]) > 21 || atoi(tokens[1]) == 34 || atoi(tokens[1]) == 9 || atoi(tokens[1]) == 15 || atoi(tokens[1]) == 18 || atoi(tokens[1]) == 20) fmtWrite("Unknown fault interrupt");
             if (tokenCount == 2) sendInterrupt(atoi(tokens[1]));
-            else panic();
+            else userPanic();
         }
         cmd("reboot")   reboot();
         cmd("shutdown") shutdown();
@@ -143,7 +143,7 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
     mem.entry_count = entryCount;
     mem.entries = entries;
 
-    fmtWrite("Welcome to the lanternCOM shell!\nReport bugs at https://github.com/hackifiery/lantern-os.\n");
+    fmtWrite("\nWelcome to the lanternCOM shell!\nReport bugs at https://github.com/hackifiery/lantern-os.\n");
     fmtWrite("Type 'help' for commands.\n\n");
     #undef init
     for (;;) com(&mem);
