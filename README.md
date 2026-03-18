@@ -1,5 +1,5 @@
 # LanternOS
-LanternOS is a hobbyist OS and kernel made by me to explore how OS's work. It currently has an IDT, a basic GDT, IRQ and ISRs, and a basic keyboard and VGA text-mode driver. It also uses a custom bootloader called Lightbulb.
+LanternOS is a hobbyist OS and kernel made by me to explore how OS's work. It currently has an IDT, a basic GDT, IRQ and ISRs, and a basic keyboard and VGA text-mode driver. It also uses a custom bootloader called Lightbulb. It runs on 32-bit x86, and although it boots on x86_64, 64-bit hasn't been thoroughly tested yet and the binaries are still 32-bit.
 ## lanternCOM
 lanternCOM is the basic shell for LanternOS. It only has a couple of commands so far.
 
