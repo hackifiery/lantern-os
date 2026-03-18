@@ -12,3 +12,8 @@ lanternCOM is the basic shell for LanternOS. It only has a couple of commands so
     - `/m`=mb, `/k`=kb, `/b`=bytes, `/g`=gb, no flag=kb
 - `panic [code]`: Triggers a kernel panic with an optional fault code.
 - `reboot` and `shutdown`: self-explanitory
+
+## Screenshots
+![start](samples/lanternStart.png)
+![stuff](samples/lanternStuff.png)
+![panic](samples/lanternPanic.png)
