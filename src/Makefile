@@ -12,6 +12,13 @@ else
     LDFLAGS := -m elf_i386 -T linker.ld
 endif
 
+HAS_CROSS = $(shell command -v i686-elf-gcc 2> /dev/null)
+
+ifndef (HAS_CROSS)
+	CC = gcc
+	LD = ld
+endif
+
 OBJCOPY := objcopy
 DATE     := $(shell date)
 ARCH     := $(shell gcc -dumpmachine)

@@ -6,7 +6,6 @@ IMG = lanternos.img
 .PHONY: src img
 
 all: src img
-test: src img run
 
 src:
 	make -C src all
