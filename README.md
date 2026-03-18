@@ -10,6 +10,7 @@ lanternCOM is the basic shell for LanternOS. It only has a couple of commands so
 - `sysinfo`: Displays the current OS version, build date, and target architecture.
 - `mem [flag]`: Reports memory statistics (not very accurate).
     - `/m`=mb, `/k`=kb, `/b`=bytes, `/g`=gb, no flag=kb
+- `calc`: a simple calculator.
 - `panic [code]`: Triggers a kernel panic with an optional fault code.
 - `reboot` and `shutdown`: self-explanitory
 
