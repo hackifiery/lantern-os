@@ -4,6 +4,7 @@ global irq0
 global irq1
 global userPanic
 global sendInterrupt
+global isrDefault
 extern irqHandler
 extern keyboardHandler
 extern interruptDispatcher
@@ -101,4 +102,9 @@ irq0:
 irq1:
     push 0      ; Dummy error code
     push 33     ; IRQ 1 maps to Int 33
+    jmp isr_common_stub
+
+isrDefault:
+    push 0
+    push 0xFF       ; sentinel number
     jmp isr_common_stub

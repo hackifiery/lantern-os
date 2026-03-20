@@ -25,8 +25,6 @@ _start:
     push ecx
     push ebx
 
-    call initSerial
-    call initIdt
     call kmain
     
     hlt

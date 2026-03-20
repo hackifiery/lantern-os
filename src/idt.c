@@ -4,6 +4,7 @@
 struct idtEntry idt[256];
 struct idtPtr idtp;
 volatile unsigned int sysTicks = 0;
+extern void isrDefault(void);
 
 void remapPic(void) {
     outb(0x20, 0x11); // Initialize Master
@@ -30,7 +31,7 @@ void initIdt(void) {
     idtp.limit = (sizeof(struct idtEntry) * 256) - 1;
     idtp.base  = (unsigned int)&idt;
 
-    for(int i = 0; i < 256; i++) setIdtGate(i, 0);
+    for(int i = 0; i < 256; i++) setIdtGate(i, (unsigned int) isrDefault);
     // exceptions/faults
     extern void isr0();
     extern void isr1();
@@ -164,6 +165,13 @@ void fault(struct Registers *r) {
 }
 
 void interruptDispatcher(struct Registers *r) {
+    if (r->int_no == 0xFF) {
+        // some random interrupt, just eoi & return
+        if (r->int_no >= 40) outb(0xA0, 0x20);
+        outb(0x20, 0x20);
+        return;
+    }
+    
     if (r->int_no >= 32 && r->int_no < 48 && r->int_no != 34) {
         // irq
         if (r->int_no == 33) {

@@ -31,23 +31,23 @@ extern unsigned char keymap[128], keymapShifted[128];
 extern int shiftActive, capsLockActive;
 
 static inline void outb(unsigned short port, unsigned char val) {
-    __asm__ volatile ( "outb %0, %1" : : "a"(val), "Nd"(port) );
+    __asm__ volatile ("outb %0, %1" : : "a"(val), "Nd"(port));
+}
+
+static inline unsigned char inb(unsigned short port) {
+    unsigned char ret;
+    __asm__ volatile ("inb %1, %0" : "=a"(ret) : "Nd"(port));
+    return ret;
 }
 
 static inline void outw(unsigned short port, unsigned short data) {
     __asm__ volatile ("outw %w0, %w1" : : "a"(data), "Nd"(port));
 }
 
-unsigned short inw(unsigned short port) {
+static unsigned short inw(unsigned short port) {
     unsigned short result;
     __asm__ volatile ("inw %1, %0" : "=a"(result) : "dN"(port));
     return result;
-}
-
-static inline unsigned char inb(unsigned short port) {
-    unsigned char ret;
-    __asm__ volatile ( "inb %1, %0" : "=a"(ret) : "Nd"(port) );
-    return ret;
 }
 
 void keyboardHandler(void);

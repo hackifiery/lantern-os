@@ -24,7 +24,7 @@ DATE     := $(shell date)
 ARCH     := $(shell gcc -dumpmachine)
 ASFLAGS  := -f elf32
 CFLAGS   := -m32 -ffreestanding -fno-stack-protector -nostdlib -fno-pic -fno-leading-underscore -std=c99 -I../include -D__BUILD_DATE__="\"$(DATE)\"" -D__BUILD_ARCH__="\"$(ARCH)\""
-OBJS     := boot.o kernel.o io.o serial.o idt.o interrupts.o string_utils.o sys.o gdt.o gdt_flush.o
+OBJS     := boot.o kernel.o io.o serial.o idt.o interrupts.o string_utils.o sys.o gdt.o gdt_flush.o ata.o
 
 .PHONY: all
 
