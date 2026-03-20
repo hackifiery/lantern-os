@@ -67,6 +67,7 @@ void calc(void) {
 static void com(struct MemoryInfo* mbPtr) {
     char input[256];
     char* tokens[16];
+    unsigned short dskBuf[256];
 
     for(;;) {
         fmtWrite("lanternCOM -> ");
@@ -114,28 +115,10 @@ static void com(struct MemoryInfo* mbPtr) {
             if (tokenCount == 2) sendInterrupt(atoi(tokens[1]));
             else userPanic();
         }
-        cmd("disk") {
-            unsigned short disk_buffer[256]; // 512 bytes
-            unsigned int lba = atoi(tokens[2]);
-
-            if (strcmp(tokens[1], "read") == 0) {
-                ataRead(lba, disk_buffer);
-                fmtWrite("Sector %d contents (first 16 bytes): ", lba);
-                for(int i = 0; i < 8; i++) {
-                    fmtWrite("%04x ", disk_buffer[i]);
-                }
-            } 
-            else if (strcmp(tokens[1], "write") == 0) {
-                // Fill buffer with a pattern or a string from tokens[3]
-                for(int i = 0; i < 256; i++) disk_buffer[i] = 0x4141; // "AA"
-                ataWrite(lba, disk_buffer);
-                fmtWrite("Sector %d written with pattern 0x4141", lba);
-            }
-            else if (strcmp(tokens[1], "ident") == 0) {
-                ataIdentify();
-            }
-            else {
-                fmtWrite("Usage: disk [read|write|ident] [lba]");
+        cmd("dir") {
+            for (int i = 0; i < ataGetSectorCount(); i++) {
+                ataRead(i, dskBuf);
+                for (int j = 0; j < 256; j++) fmtWrite("%c", dskBuf[i]);
             }
         }
         cmd("reboot")   reboot();

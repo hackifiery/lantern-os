@@ -132,3 +132,31 @@ void ataWrite(unsigned int lba, unsigned short *buf) {
     outb(ATA_COMM, ATA_COMM_FLUSH);
     ataWait(1 << ATA_SR_BSY, 0, 10000);
 }
+
+unsigned int ataGetSectorCount(void) {
+    outb(ATA_HEAD, 0xA0);
+    outb(ATA_LBA_L, 0);
+    outb(ATA_LBA_M, 0);
+    outb(ATA_LBA_H, 0);
+    outb(ATA_SEC_COUNT, 0);
+    outb(ATA_COMM, ATA_COMM_IDENT);
+
+    uc status = inb(ATA_SR);
+    if (status == 0 || status == 0xFF) return 0;  // No drive
+
+    if (!ataWait(ATA_SR_BSY, 0, 10000)) return 0;
+    if (!ataWait(ATA_SR_DRQ, ATA_SR_DRQ, 10000)) return 0;
+
+    unsigned short buf[256];
+    for (int i = 0; i < 256; i++) buf[i] = inw(ATA_DATA);
+
+    // Word 83 bit 10 indicates 48-bit LBA support
+    if (buf[83] & (1 << 10)) {
+        // Words 100-103: 64-bit sector count, we return the low 32 bits
+        // (covers drives up to 2TB which is fine for a hobby OS)
+        return ((unsigned int)buf[101] << 16) | buf[100];
+    } else {
+        // Words 60-61: 28-bit LBA sector count
+        return ((unsigned int)buf[61] << 16) | buf[60];
+    }
+}

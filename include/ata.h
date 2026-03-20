@@ -4,5 +4,6 @@
 int ataIdentify(void);
 void ataRead(unsigned int lba, unsigned short *buf);
 void ataWrite(unsigned int lba, unsigned short *buf);
+unsigned int ataGetSectorCount(void);
 
 #endif
