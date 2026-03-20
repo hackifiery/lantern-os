@@ -36,28 +36,6 @@ Bit     Abbreviation    Function
 6       RDY                 Bit is clear when drive is spun down, or after an error. Set otherwise.
 7       BSY                 Indicates the drive is preparing to send/receive data (wait for it to clear). In case of 'hang' (it never clears), do a software reset.
 */
-#define ATA_PRIM_OFFSET 0x1F0
-#define ATA_DATA        (ATA_PRIM_OFFSET)
-#define ATA_ERR         (ATA_PRIM_OFFSET + 1)
-#define ATA_SEC_COUNT   (ATA_PRIM_OFFSET + 2)
-#define ATA_LBA_L       (ATA_PRIM_OFFSET + 3)
-#define ATA_LBA_M       (ATA_PRIM_OFFSET + 4)
-#define ATA_LBA_H       (ATA_PRIM_OFFSET + 5)
-#define ATA_HEAD        (ATA_PRIM_OFFSET + 6)
-#define ATA_COMM        (ATA_PRIM_OFFSET + 7)
-#define ATA_SR          (ATA_PRIM_OFFSET + 7)
-#define ATA_SR_ERR      (1 << 0)
-#define ATA_SR_IDX      (1 << 1)
-#define ATA_SR_CORR     (1 << 2)
-#define ATA_SR_DRQ      (1 << 3)
-#define ATA_SR_SRV      (1 << 4)
-#define ATA_SR_DF       (1 << 5)
-#define ATA_SR_RDY      (1 << 6)
-#define ATA_SR_BSY      (1 << 7)
-#define ATA_COMM_IDENT  0xEC
-#define ATA_COMM_READ   0x20
-#define ATA_COMM_WRITE  0x30
-#define ATA_COMM_FLUSH  0xE7
 
 static int waitDrive(void) {
     // Wait for BSY to clear
@@ -78,7 +56,7 @@ static int waitDrive(void) {
     return 0;  // Timeout
 }
 
-static int ataWait(unsigned char mask, unsigned char value, int timeout) {
+int ataWait(unsigned char mask, unsigned char value, int timeout) {
     for (int i = 0; i < timeout; i++) {
         uc status = inb(ATA_SR);
         if ((status & mask) == value) return 1;
@@ -97,6 +75,8 @@ int ataIdentify(void) {
     // unsigned char x = inb(ATA_COMM);
     outb(ATA_COMM, (uc)ATA_COMM_IDENT);
     uc status = inb(ATA_SR);
+    {unsigned short _[256]; ataRead(0, _);} // prime the ata
+
     if (status == 0) {
         fmtWrite("ata: no drive\n");
     }
@@ -150,13 +130,11 @@ unsigned int ataGetSectorCount(void) {
     unsigned short buf[256];
     for (int i = 0; i < 256; i++) buf[i] = inw(ATA_DATA);
 
-    // Word 83 bit 10 indicates 48-bit LBA support
+    // 48-bit
     if (buf[83] & (1 << 10)) {
-        // Words 100-103: 64-bit sector count, we return the low 32 bits
-        // (covers drives up to 2TB which is fine for a hobby OS)
         return ((unsigned int)buf[101] << 16) | buf[100];
     } else {
-        // Words 60-61: 28-bit LBA sector count
+        // 28-bit
         return ((unsigned int)buf[61] << 16) | buf[60];
     }
 }

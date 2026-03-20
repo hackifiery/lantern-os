@@ -27,3 +27,9 @@ void upper(char* str) {
         }
     }
 }
+
+unsigned int strlen(const char *s) {
+    unsigned int n = 0;
+    while (s[n]) n++;
+    return n;
+}

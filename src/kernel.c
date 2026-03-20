@@ -4,6 +4,7 @@
 #include "sys.h"
 #include "gdt.h"
 #include "ata.h"
+#include "tar.h"
 
 #define VER "0.0.1"
 
@@ -116,10 +117,14 @@ static void com(struct MemoryInfo* mbPtr) {
             else userPanic();
         }
         cmd("dir") {
-            for (int i = 0; i < ataGetSectorCount(); i++) {
-                ataRead(i, dskBuf);
-                for (int j = 0; j < 256; j++) fmtWrite("%c", dskBuf[i]);
-            }
+            //unsigned short buf[256];
+            //ataRead(0, buf);
+            tarLoad();
+            tarList();
+        }
+        cmd("type") {
+            tarLoad();
+            tarPrintFile(tokens[1]);
         }
         cmd("reboot")   reboot();
         cmd("shutdown") shutdown();
