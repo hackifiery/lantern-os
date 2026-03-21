@@ -4,7 +4,7 @@
 #include "sys.h"
 #include "gdt.h"
 #include "ata.h"
-#include "tar.h"
+#include "ustar.h"
 #include "api.h"
 
 #define VER "0.0.1"
@@ -89,7 +89,7 @@ static void com(struct MemoryInfo* mbPtr) {
             //unsigned short buf[256];
             //ataRead(0, buf);
             tarLoad();
-            tarList();
+            tarList(tokens[1]);
         }
         cmd("cat") {
             tarLoad();

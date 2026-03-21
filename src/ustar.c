@@ -1,4 +1,4 @@
-#include "tar.h"
+#include "ustar.h"
 #include "ata.h"
 #include "string_utils.h"
 #include "io.h"
@@ -59,18 +59,29 @@ int tarRead(unsigned char *buf, char *fname, char **dataPtr) {
     return oct2bin(th->size, 11);
 }
 
-void tarList(void) {
+void tarList(const char* flag) {
     struct TarHeader *curr = (struct TarHeader *)tarBuf;
     //fmtWrite("Directory listing of /\n");
-    fmtWrite("type  size  lastModify   name\n");
-    fmtWrite("=====================================\n");
+    if (strcmp(flag, "-l") == 0) {
+        fmtWrite("type  size  lastModify   name\n");
+        fmtWrite("=====================================\n");
+    }
     while (tarValid(curr)){
-        switch (curr->type) {
-            case TAR_FILE: fmtWrite("[file]"); break;
-            case TAR_DIR:  fmtWrite("[dir] "); break;
-            default:       fmtWrite("[????]"); break;
+        if (strcmp(flag, "-l") == 0) {
+            switch (curr->type) {
+                case TAR_FILE: fmtWrite("[file]"); break;
+                case TAR_DIR:  fmtWrite("[dir] "); break;
+                default:       fmtWrite("[????]"); break;
+            }
+            fmtWrite("%05d %s %s\n", oct2bin(curr->size, 12), curr->lastModTime, curr->name);
         }
-        fmtWrite("%05d %s %s\n", oct2bin(curr->size, 12), curr->lastModTime, curr->name);
+        else {
+            switch (curr->type) {
+                case TAR_FILE: fmtWrite("%s  ", curr->name); break;
+                case TAR_DIR:  fmtWrite("%s/  ", curr->name); break;
+                default:       fmtWrite("%s  ", curr->name); break;
+            }
+        }
         curr = tarNext(curr);
     }
 }

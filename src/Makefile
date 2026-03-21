@@ -1,7 +1,7 @@
 include settings.mk
 .PHONY: all
 
-OBJS     := boot.o kernel.o io.o serial.o idt.o interrupts.o string_utils.o sys.o gdt.o gdt_flush.o ata.o tar.o
+OBJS     := boot.o kernel.o io.o serial.o idt.o interrupts.o string_utils.o sys.o gdt.o gdt_flush.o ata.o ustar.o
 
 all: $(BIN)
 

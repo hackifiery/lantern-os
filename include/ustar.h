@@ -1,7 +1,6 @@
 #ifndef LANTERN_TAR_H
 #define LANTERN_TAR_H
 
-
 #define TAR_FILE   '0'
 #define TAR_HLINK  '1'
 #define TAR_SLINK  '2'
@@ -33,6 +32,6 @@ struct TarHeader {
 int tarRead(unsigned char *buf, char *fname, char **dataPtr);
 int tarReadFile(const char *fname, char **out);
 void tarPrintFile(const char *fname);
-void tarList(void);
+void tarList(const char* flag);
 void tarLoad(void);
 #endif // LANTERN_TAR_H
