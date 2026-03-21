@@ -2,15 +2,14 @@
 #define LANTERN_TAR_H
 
 
-#define TAR_NORMAL 0
-#define TAR_HLINK  1
-#define TAR_SLINK  2
-#define TAR_CDEV   3
-#define TAR_BDEV   4
-#define TAR_DIR    5
-#define TAR_PIPE   6
+#define TAR_FILE   '0'
+#define TAR_HLINK  '1'
+#define TAR_SLINK  '2'
+#define TAR_CDEV   '3'
+#define TAR_BDEV   '4'
+#define TAR_DIR    '5'
+#define TAR_PIPE   '6'
 
-// TODO: use this struct for all tar-related functions
 struct TarHeader {
     char name[100];
     char mode[8];
@@ -31,9 +30,9 @@ struct TarHeader {
     char _[12]; // padding
 };
 
-int tarRead(unsigned char *ar, char* name, char **out);
 void tarLoad(void);
-void tarPrintFile(const char *name);
-void tarDebug(void);
+int tarRead(unsigned short *buf, char *fname, char **dataPtr);
 void tarList(void);
+void tarPrintFile(const char *fname);
+
 #endif // LANTERN_TAR_H

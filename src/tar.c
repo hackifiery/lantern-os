@@ -5,8 +5,10 @@
 
 #define TAR_MAX_SECTORS 64  // 32 kb
 #define TAR_START_LBA 0
+#define ceilDiv(x, y) (x / y + (x % y != 0))
 
 static unsigned short tarBuf[TAR_MAX_SECTORS * 256];
+//static char* cwd = "/";
 
 static int oct2bin(unsigned char *str, int size) {
     int n = 0;
@@ -28,63 +30,54 @@ static int memcmp(const void *a, const void *b, unsigned int n) {
     return 0;
 }
 
-void tarDebug(void) {
-    unsigned char *ptr = (unsigned char *)tarBuf;
-    fmtWrite("magic: ");
-    for (int i = 0; i < 6; i++) fmtWrite("%02x ", ptr[257 + i]);
-    fmtWrite("\n");
-    int entry = 0;
-    while (memcmp(ptr + 257, "ustar", 5) == 0) {
-        int filesize = oct2bin(ptr + 0x7c, 11);
-        fmtWrite("entry %d: '%s' (%d bytes)\n", entry++, (char*)ptr, filesize);
-        ptr += (((filesize + 511) / 512) + 1) * 512;
-    }
-    fmtWrite("done\n");
+static int tarValid(struct TarHeader *th) {
+    if (memcmp(th->ustar, "ustar", 5) == 0) return 1;
+    else return 0;
 }
 
-int tarRead(unsigned char *ar, char *name, char **out) {
-    unsigned char *ptr = ar;
+// note: tarNext DOES NOT MODIFY BUF!!! SET IT TO IT!!!
+static struct TarHeader *tarNext(struct TarHeader *th) {
+    int size = oct2bin((unsigned char *)th->size, 11);
+    int blocks = ceilDiv(size, 512) + 1; // # of sectors to advance to the next file
+    return (struct TarHeader*)((unsigned char *)th + (blocks * 512));
+}
 
-    while (!memcmp(ptr + 257, "ustar", 5)) {
-        int filesize = oct2bin(ptr + 0x7c, 11);
-        if (!memcmp(ptr, name, strlen(name) + 1)) {
-            *out = ptr + 512;
-            return filesize;
-        }
-        ptr += (((filesize + 511) / 512) + 1) * 512;
+static struct TarHeader *tarFind(unsigned short *buf, char *fname) {
+    struct TarHeader *curr = (struct TarHeader*) buf;
+    while (tarValid(curr)) {
+        if (strcmp(curr->name, fname) == 0) return curr;
+        curr = tarNext(curr);
     }
     return 0;
 }
 
-void tarLoad(void) {
-    for (unsigned int i = 0; i < TAR_MAX_SECTORS; i++) {
-        ataRead(TAR_START_LBA + i, tarBuf + (i * 256));
-    }
-}
-
-void tarPrintFile(const char *name) {
-    char *out = 0;
-    int size = tarRead((unsigned char *)tarBuf, (char *)name, &out);
-
-    if (size == 0) {
-        fmtWrite("file not found: %s\n", name);
-        return;
-    }
-
-    //fmtWrite("=== %s (%d bytes) ===\n", name, size);
-    for (int i = 0; i < size; i++) {
-        fmtWrite("%c", out[i]);
-    }
-    fmtWrite("\n");
+// returns file size
+int tarRead(unsigned short *buf, char *fname, char **dataPtr) {
+    struct TarHeader *th = tarFind(buf, fname);
+    if (!th) return 0;
+    *dataPtr = (char*)th + 512;
+    return oct2bin(th->size, 11);
 }
 
 void tarList(void) {
-    unsigned char *ptr = (unsigned char *)tarBuf;
-    while (memcmp(ptr + 257, "ustar", 5) == 0) {
-        int filesize = oct2bin(ptr + 0x7c, 11);
-        char type = ptr[156];
-        char typeChar = (type == '5') ? 'd' : 'f';
-        fmtWrite("[%c] %s (%d bytes)\n", typeChar, (char*)ptr, filesize);
-        ptr += (((filesize + 511) / 512) + 1) * 512;
+    struct TarHeader *curr = (struct TarHeader *)tarBuf;
+    while (tarValid(curr)){
+        switch (curr->type) {
+            case TAR_FILE: fmtWrite("[file] %s\n", curr->name); break;
+            case TAR_DIR:  fmtWrite("[dir]  %s\n", curr->name); break;
+            default:       fmtWrite("[????] %s\n", curr->name); break;
+        }
+        curr = tarNext(curr);
     }
+}
+
+void tarPrintFile(const char *fname) {
+    char *data;
+    const unsigned int size = tarRead(tarBuf, fname, &data);
+    if (!size) {fmtWrite("%s not found\n", fname); return;}
+    for (int i = 0; i < size; i++) fmtWrite("%c", data[i]); // safer than directly printing data
+}
+
+void tarLoad(void) {
+    for (unsigned int i = 0; i < TAR_MAX_SECTORS; i++) ataRead(TAR_START_LBA + i, tarBuf + (i * 256));
 }

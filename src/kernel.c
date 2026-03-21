@@ -81,14 +81,14 @@ static void com(struct MemoryInfo* mbPtr) {
         if (strcmp(tokens[0], "") == 0) continue;
 
         cmd("help") {
-            fmtWrite("Available: help, echo, cls, calc, ping, uptime, sysinfo, mem, panic, reboot, shutdown");
+            fmtWrite("Available: help, echo, clear, calc, ping, uptime, uname, free, cat, ls, panic, reboot, shutdown");
         }
         cmd("echo") {
             for(int i = 1; i < tokenCount; i++) {
                 fmtWrite("%s ", tokens[i]);
             }
         }
-        cmd("cls") {
+        cmd("clear") {
             clearScreen();
             continue;
         }
@@ -97,15 +97,15 @@ static void com(struct MemoryInfo* mbPtr) {
             unsigned int seconds = sysTicks / 100;
             fmtWrite("%d s", seconds);
         }
-        cmd("sysinfo") {
+        cmd("uname") {
             fmtWrite("lanternOS i386 v%s (built %s on %s)", VER, __BUILD_DATE__, __BUILD_ARCH__);
         }
-        cmd("mem") {
+        cmd("free") {
             unsigned int total = getTotalMem(mbPtr);
             unsigned int used = getUsedMem();
-            if (strcmp(tokens[1], "/m") == 0)      fmtWrite("total = %dm, used = %dm, free = %dm", total/1024, used/1024, (total - used)/1024);
-            else if (strcmp(tokens[1], "/g") == 0) fmtWrite("total = %dg, used = %dg, free = %dg", total/1024/1024, used/1024/1024, (total - used)/1024/1024);
-            else if (strcmp(tokens[1], "/b") == 0) fmtWrite("total = %db, used = %db, free = %db", total*1024, used*1024, (total - used)*1024);
+            if (strcmp(tokens[1], "-m") == 0)      fmtWrite("total = %dm, used = %dm, free = %dm", total/1024, used/1024, (total - used)/1024);
+            else if (strcmp(tokens[1], "-g") == 0) fmtWrite("total = %dg, used = %dg, free = %dg", total/1024/1024, used/1024/1024, (total - used)/1024/1024);
+            else if (strcmp(tokens[1], "-b") == 0) fmtWrite("total = %db, used = %db, free = %db", total*1024, used*1024, (total - used)*1024);
             else                                   fmtWrite("total = %dk, used = %dk, free = %dk", total, used, total - used);
         }
         cmd("calc") {
@@ -116,15 +116,16 @@ static void com(struct MemoryInfo* mbPtr) {
             if (tokenCount == 2) sendInterrupt(atoi(tokens[1]));
             else userPanic();
         }
-        cmd("dir") {
+        cmd("ls") {
             //unsigned short buf[256];
             //ataRead(0, buf);
             tarLoad();
             tarList();
         }
-        cmd("type") {
+        cmd("cat") {
             tarLoad();
             tarPrintFile(tokens[1]);
+            continue;
         }
         cmd("reboot")   reboot();
         cmd("shutdown") shutdown();

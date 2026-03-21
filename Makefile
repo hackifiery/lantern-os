@@ -20,8 +20,8 @@ img: src
 $(DISK_IMG):
 	dd if=/dev/zero of=$(DISK_IMG) bs=1M count=10
 	mkdir -p etc
-	echo "hello" > etc/hello.txt
-	tar --format=ustar -cf archive.tar etc/hello.txt
+	echo "hello" > hello.txt
+	tar --format=ustar -cf archive.tar hello.txt
 	dd if=archive.tar of=$(DISK_IMG) conv=notrunc
 	rm -rf etc archive.tar
 
