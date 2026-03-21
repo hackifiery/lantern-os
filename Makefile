@@ -2,7 +2,6 @@ BOOT_SRC = bl/bootloader.asm
 BOOT_BIN = bl/bootloader.bin
 KERNEL_BIN = src/kern.bin
 IMG = lanternos.img
-DISK_IMG = disk.img
 
 .PHONY: src img
 
@@ -13,24 +12,19 @@ src:
 
 img: src
 	nasm -f bin $(BOOT_SRC) -o $(BOOT_BIN)
-	dd if=/dev/zero of=$(IMG) bs=1k count=1440
-	dd if=$(BOOT_BIN) of=$(IMG) conv=notrunc
-	dd if=$(KERNEL_BIN) of=$(IMG) seek=1 conv=notrunc
-
-$(DISK_IMG):
-	dd if=/dev/zero of=$(DISK_IMG) bs=1M count=10
+	dd if=/dev/zero of=$(IMG) bs=1k count=4000 #4Mb
+	dd if=$(BOOT_BIN) of=$(IMG) bs=512 seek=0 count=1 conv=notrunc
+	dd if=$(KERNEL_BIN) of=$(IMG) bs=512 seek=1 count=100 conv=notrunc
 	echo "hello" > hello.txt
 	tar --format=ustar -cf archive.tar hello.txt
-	dd if=archive.tar of=$(DISK_IMG) conv=notrunc
+	dd if=archive.tar of=$(IMG) seek=101 bs=512 count=100 conv=notrunc
 	rm -rf hello.txt archive.tar
-
-run: img src $(DISK_IMG)
+run: img src $(IMG)
 	qemu-system-i386 \
-		-drive format=raw,file=$(IMG),if=floppy \
-		-drive format=raw,file=$(DISK_IMG),index=0,if=ide \
+		-drive format=raw,file=$(IMG),index=0,if=ide \
 		-m 64 -display curses
 
 clean:
 	$(MAKE) -C src clean
-	rm -f $(IMG) $(DISK_IMG) $(BOOT_BIN)
+	rm -f $(IMG) $(BOOT_BIN)
 	rm -f **/*.o **/*.bin **/*.elf

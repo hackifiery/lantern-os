@@ -59,6 +59,15 @@ log:                    ; logs a msg to the screen. needs: si (string)
     popa
     ret
 
+dap:
+    db 0x10             ; size (16b)
+    db 0                ; always 0
+    dw 100              ; sec count
+    dw 0                ; dest offset
+    dw 0x1000           ; dest seg
+    dd 1                ; sec 1 (0 is bootloader)
+    dd 0                ; high 32 bits of lba
+
 getMem:
     mov si, msgMem
     call log
@@ -109,16 +118,11 @@ loadKern:                ; needs: al (# of sectors to read), es:bx (buffer)
     mov si, msgLoad
     call log
     
-    pusha
-    movzx si, al         ; get sectors to read
-    mov ch, 0            ; cyl 0
-    mov dh, 0            ; head 0
-    mov cl, 2            ; sec 2 (sec 1 is bootloader)
-    mov dl, [BOOT_DRIVE] ; drive #
-    mov ah, 2            ; disk read
+    mov dl, [BOOT_DRIVE]
+    mov si, dap
+    mov ah, 0x42         ; lba read
     int 0x13             ; disk read interrupt
     jc readFail
-    popa
 
     mov si, msgOk
     call log
@@ -132,10 +136,6 @@ readFail:                ; prints a '?'
     jmp $                ; fah
 
 PMode:
-    mov ax, 0x1000
-    mov es, ax
-    mov bx, 0
-    mov al, 100          ; 100 sectors, 50kb
     call loadKern
 
     call getMem

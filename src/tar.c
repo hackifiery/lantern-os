@@ -4,7 +4,7 @@
 #include "io.h"
 
 #define TAR_MAX_SECTORS 64  // 32 kb
-#define TAR_START_LBA 0
+#define TAR_START_LBA 101
 #define ceilDiv(x, y) (x / y + (x % y != 0))
 
 static unsigned short tarBuf[TAR_MAX_SECTORS * 256];
