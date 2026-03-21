@@ -30,9 +30,9 @@ struct TarHeader {
     char _[12]; // padding
 };
 
-void tarLoad(void);
-int tarRead(unsigned short *buf, char *fname, char **dataPtr);
-void tarList(void);
+int tarRead(unsigned char *buf, char *fname, char **dataPtr);
+int tarReadFile(const char *fname, char **out);
 void tarPrintFile(const char *fname);
-
+void tarList(void);
+void tarLoad(void);
 #endif // LANTERN_TAR_H

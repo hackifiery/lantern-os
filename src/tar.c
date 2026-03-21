@@ -42,7 +42,7 @@ static struct TarHeader *tarNext(struct TarHeader *th) {
     return (struct TarHeader*)((unsigned char *)th + (blocks * 512));
 }
 
-static struct TarHeader *tarFind(unsigned short *buf, char *fname) {
+static struct TarHeader *tarFind(unsigned char *buf, const char *fname) {
     struct TarHeader *curr = (struct TarHeader*) buf;
     while (tarValid(curr)) {
         if (strcmp(curr->name, fname) == 0) return curr;
@@ -52,7 +52,7 @@ static struct TarHeader *tarFind(unsigned short *buf, char *fname) {
 }
 
 // returns file size
-int tarRead(unsigned short *buf, char *fname, char **dataPtr) {
+int tarRead(unsigned char *buf, char *fname, char **dataPtr) {
     struct TarHeader *th = tarFind(buf, fname);
     if (!th) return 0;
     *dataPtr = (char*)th + 512;
@@ -73,11 +73,15 @@ void tarList(void) {
 
 void tarPrintFile(const char *fname) {
     char *data;
-    const unsigned int size = tarRead(tarBuf, fname, &data);
+    const unsigned int size = tarRead((unsigned char*)tarBuf, fname, &data);
     if (!size) {fmtWrite("%s not found\n", fname); return;}
     for (int i = 0; i < size; i++) fmtWrite("%c", data[i]); // safer than directly printing data
 }
 
 void tarLoad(void) {
     for (unsigned int i = 0; i < TAR_MAX_SECTORS; i++) ataRead(TAR_START_LBA + i, tarBuf + (i * 256));
+}
+
+int tarReadFile(const char *fname, char **out) {
+    return tarRead((unsigned char *)tarBuf, (char *)fname, out);
 }

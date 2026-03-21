@@ -5,6 +5,7 @@
 #include "gdt.h"
 #include "ata.h"
 #include "tar.h"
+#include "api.h"
 
 #define VER "0.0.1"
 
@@ -16,6 +17,7 @@
 #define __BUILD_ARCH__ "unknown"
 #endif
 
+struct KernelAPI api;
 
 static int tokenize(char* str, char** tokens, int max_tokens) {
     int count = 0;
@@ -33,36 +35,6 @@ static int tokenize(char* str, char** tokens, int max_tokens) {
         }
     }
     return count;
-}
-
-void calc(void) {
-    char input[256];
-    char* tokens[16];
-    int res = 0;
-    for (;;) {
-        fmtWrite("calc -> ");
-        fmtGet("%s", input);
-        int tokenCount = tokenize(input, tokens, 16);
-        for (unsigned int i = 0; i < tokenCount; i++) {
-            // fmtWrite("token %d: %s\n", i, tokens[i]);
-            static char res_str[16] = ""; // static is needed here to avoid stack corruption!!!
-            sfmtWrite(res_str, "%d", res);
-            if (strcmp(tokens[i], "$") == 0) {
-                // fmtWrite("Replacing $ with %s\n", res_str);
-                tokens[i] = res_str;
-            }
-        }
-        if (tokenCount == 0) continue;
-        #define cmd(s) else if (strcmp(tokens[0], s) == 0)
-        cmd("add") res = atoi(tokens[1]) + atoi(tokens[2]);
-        cmd("sub") res = atoi(tokens[1]) - atoi(tokens[2]);
-        cmd("mul") res = atoi(tokens[1]) * atoi(tokens[2]);
-        cmd("div") res = atoi(tokens[1]) / atoi(tokens[2]);
-        cmd("exit") return;
-        else {fmtWrite("Unknown operation: %s\n", tokens[0]); continue;}
-        fmtWrite("%d\n", res);
-        #undef cmd
-    }
 }
 
 static void com(struct MemoryInfo* mbPtr) {
@@ -108,9 +80,6 @@ static void com(struct MemoryInfo* mbPtr) {
             else if (strcmp(tokens[1], "-b") == 0) fmtWrite("total = %db, used = %db, free = %db", total*1024, used*1024, (total - used)*1024);
             else                                   fmtWrite("total = %dk, used = %dk, free = %dk", total, used, total - used);
         }
-        cmd("calc") {
-            calc();
-        }
         cmd("panic") {
             if (atoi(tokens[1]) > 21 || atoi(tokens[1]) == 34 || atoi(tokens[1]) == 9 || atoi(tokens[1]) == 15 || atoi(tokens[1]) == 18 || atoi(tokens[1]) == 20) fmtWrite("Unknown fault interrupt");
             if (tokenCount == 2) sendInterrupt(atoi(tokens[1]));
@@ -130,7 +99,22 @@ static void com(struct MemoryInfo* mbPtr) {
         cmd("reboot")   reboot();
         cmd("shutdown") shutdown();
         else {
-            fmtWrite("Unknown command: %s", tokens[0]);
+            char *data = 0;
+            int size = tarReadFile(tokens[0], &data);
+            if (size == 0) { fmtWrite("not found: %s\n", tokens[0]); continue; }
+            // copy to 0x200000
+            unsigned char *dest = (unsigned char *)0x200000;
+            for (int i = 0; i < size; i++) dest[i] = ((unsigned char *)data)[i];
+            // jump to it
+            /*DEBUG:fmtWrite("api addr: %x\n", (unsigned int)&api);
+            fmtWrite("api.fmtWrite: %x\n", (unsigned int)api.fmtWrite);
+            fmtWrite("jumping to: %x\n", (unsigned int)0x200000);
+            fmtWrite("calc bytes: %02x %02x %02x %02x\n",
+                    dest[0], dest[1], dest[2], dest[3]);*/
+            typedef void (*Program)(struct KernelAPI *);
+            Program prog = (Program)0x200000;
+            prog(&api);
+            //fmtWrite("Unknown command: %s", tokens[0]);
         }
 
         fmtWrite("\n");
@@ -151,7 +135,14 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
     init(initGdt(), "GDT");
     init(__asm__ volatile("sti"), "interrupts");
     init(ataIdentify(), "ATA");
+    init(tarLoad(), "tar drivers");
     init(initTimer(100), "timer");
+
+    api.fmtWrite  = fmtWrite;
+    api.fmtGet    = fmtGet;
+    api.sfmtWrite = sfmtWrite;
+    api.strcmp    = strcmp;
+    api.atoi      = atoi;
 
     enableCursor(14, 15);
     struct MemoryInfo mem;
