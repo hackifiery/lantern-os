@@ -19,11 +19,10 @@ img: src
 
 $(DISK_IMG):
 	dd if=/dev/zero of=$(DISK_IMG) bs=1M count=10
-	mkdir -p etc
 	echo "hello" > hello.txt
 	tar --format=ustar -cf archive.tar hello.txt
 	dd if=archive.tar of=$(DISK_IMG) conv=notrunc
-	rm -rf etc archive.tar
+	rm -rf hello.txt archive.tar
 
 run: img src $(DISK_IMG)
 	qemu-system-i386 \
