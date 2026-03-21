@@ -255,7 +255,14 @@ static void vsfmtWrite(char* str, const char *fmt, va_list args) {
                     break;
                 }
                 case 'd': {
-                    ptr += intToStr(&str[ptr], va_arg(args, int));
+                    char tmp[32];
+                    int len = intToStr(tmp, va_arg(args, int));
+                    // pad with spaces on the left if width > len
+                    while (len < width) {
+                        str[ptr++] = ' ';
+                        width--;
+                    }
+                    for (int j = 0; j < len; j++) str[ptr++] = tmp[j];
                     break;
                 }
                 case 'c': {

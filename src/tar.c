@@ -61,12 +61,16 @@ int tarRead(unsigned char *buf, char *fname, char **dataPtr) {
 
 void tarList(void) {
     struct TarHeader *curr = (struct TarHeader *)tarBuf;
+    //fmtWrite("Directory listing of /\n");
+    fmtWrite("type  size  lastModify   name\n");
+    fmtWrite("=====================================\n");
     while (tarValid(curr)){
         switch (curr->type) {
-            case TAR_FILE: fmtWrite("[file] %s\n", curr->name); break;
-            case TAR_DIR:  fmtWrite("[dir]  %s\n", curr->name); break;
-            default:       fmtWrite("[????] %s\n", curr->name); break;
+            case TAR_FILE: fmtWrite("[file]"); break;
+            case TAR_DIR:  fmtWrite("[dir] "); break;
+            default:       fmtWrite("[????]"); break;
         }
+        fmtWrite("%05d %s %s\n", oct2bin(curr->size, 12), curr->lastModTime, curr->name);
         curr = tarNext(curr);
     }
 }
