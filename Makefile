@@ -18,9 +18,9 @@ img: src
 	dd if=$(BOOT_BIN) of=$(IMG) bs=512 seek=0 count=1 conv=notrunc
 	dd if=$(KERNEL_BIN) of=$(IMG) bs=512 seek=1 count=100 conv=notrunc
 	echo "hello" > hello.txt
-	tar --format=ustar -cf archive.tar hello.txt calc
+	tar --format=ustar -cf archive.tar hello.txt calc hello
 	dd if=archive.tar of=$(IMG) seek=101 bs=512 count=100 conv=notrunc
-	rm -rf hello.txt archive.tar calc
+	rm -rf hello.txt archive.tar calc hello
 
 run: img
 	qemu-system-i386 \
@@ -31,4 +31,4 @@ clean:
 	$(MAKE) -C src clean
 	$(MAKE) -C src/apps clean
 	rm -f $(IMG) $(BOOT_BIN)
-	rm -f **/*.o **/*.bin **/*.elf calc
+	rm -f **/*.o **/*.bin **/*.elf calc hello hello.txt archive.tar
