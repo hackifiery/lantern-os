@@ -258,14 +258,20 @@ static void vsfmtWrite(char* str, const char *fmt, va_list args) {
     int ptr = 0;
     for (int i = 0; fmt[i] != '\0'; i++) {
         if (fmt[i] == '%') {
-            i++; // skip '%'
-            
-            int width = 0; // no padding (default)
+            i++;
 
-            // check for padding
+            char padChar = ' ';
+            int width = 0;
+
+            // check for zero padding
             if (fmt[i] == '0') {
+                padChar = '0';
                 i++;
-                width = fmt[i] - '0';
+            }
+
+            // read width digits
+            while (fmt[i] >= '0' && fmt[i] <= '9') {
+                width = width * 10 + (fmt[i] - '0');
                 i++;
             }
 
@@ -278,9 +284,8 @@ static void vsfmtWrite(char* str, const char *fmt, va_list args) {
                 case 'd': {
                     char tmp[32];
                     int len = intToStr(tmp, va_arg(args, int));
-                    // pad with spaces on the left if width > len
                     while (len < width) {
-                        str[ptr++] = ' ';
+                        str[ptr++] = padChar;
                         width--;
                     }
                     for (int j = 0; j < len; j++) str[ptr++] = tmp[j];
@@ -291,7 +296,6 @@ static void vsfmtWrite(char* str, const char *fmt, va_list args) {
                     break;
                 }
                 case 'x': {
-                    // uses the width we parsed (will be 0 if no len was found)
                     ptr += hexToStr(&str[ptr], va_arg(args, unsigned int), width);
                     break;
                 }

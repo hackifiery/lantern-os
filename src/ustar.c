@@ -10,6 +10,45 @@
 static unsigned short tarBuf[TAR_MAX_SECTORS * 256];
 //static char* cwd = "/";
 
+static struct Datetime{
+    int year, month, day, hour, minute, second;
+};
+
+static void unix2date(long seconds, struct Datetime *dt) {
+    // seconds into time of day
+    long days = seconds / 86400;
+    long rem = seconds % 86400;
+    
+    dt->hour = rem / 3600;
+    dt->minute = (rem % 3600) / 60;
+    dt->second = rem % 60;
+
+    // year
+    int year = 1970;
+    while (1) {
+        int leap = (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
+        int days_in_year = leap ? 366 : 365;
+        if (days < days_in_year) break;
+        days -= days_in_year;
+        year++;
+    }
+    dt->year = year;
+
+    // month
+    static const int days_per_month[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    int leap = (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0));
+    
+    int month = 0;
+    for (month = 0; month < 12; month++) {
+        int dim = days_per_month[month];
+        if (month == 1 && leap) dim = 29; // leap yr
+        if (days < dim) break;
+        days -= dim;
+    }
+    dt->month = month + 1; // 1-12
+    dt->day = (int)days + 1;    // 1-31
+}
+
 static int oct2bin(unsigned char *str, int size) {
     int n = 0;
     unsigned char *c = str;
@@ -63,8 +102,8 @@ void tarList(const char* flag) {
     struct TarHeader *curr = (struct TarHeader *)tarBuf;
     //fmtWrite("Directory listing of /\n");
     if (strcmp(flag, "-l") == 0) {
-        fmtWrite("type  size  lastModify   name\n");
-        fmtWrite("=====================================");
+        fmtWrite("type  size  lastModify          name\n");
+        fmtWrite("=====================================================");
     }
     while (tarValid(curr)){
         if (strcmp(flag, "-l") == 0) {
@@ -74,7 +113,9 @@ void tarList(const char* flag) {
                 case TAR_DIR:  fmtWrite("[dir] "); break;
                 default:       fmtWrite("[????]"); break;
             }
-            fmtWrite("%05d %s %s", oct2bin(curr->size, 12), curr->lastModTime, curr->name);
+            {unsigned long unixDate = oct2bin(curr->lastModTime, 11); struct Datetime dt; unix2date(unixDate, &dt);
+            fmtWrite("%5d %02d-%02d-%04d@%02d:%02d:%02d %s", oct2bin(curr->size, 11), dt.month, dt.day, dt.year, dt.hour, dt.minute, dt.second, curr->name);
+            }
         }
         else {
             switch (curr->type) {
