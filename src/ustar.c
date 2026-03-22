@@ -64,16 +64,17 @@ void tarList(const char* flag) {
     //fmtWrite("Directory listing of /\n");
     if (strcmp(flag, "-l") == 0) {
         fmtWrite("type  size  lastModify   name\n");
-        fmtWrite("=====================================\n");
+        fmtWrite("=====================================");
     }
     while (tarValid(curr)){
         if (strcmp(flag, "-l") == 0) {
+            fmtWrite("\n");
             switch (curr->type) {
                 case TAR_FILE: fmtWrite("[file]"); break;
                 case TAR_DIR:  fmtWrite("[dir] "); break;
                 default:       fmtWrite("[????]"); break;
             }
-            fmtWrite("%05d %s %s\n", oct2bin(curr->size, 12), curr->lastModTime, curr->name);
+            fmtWrite("%05d %s %s", oct2bin(curr->size, 12), curr->lastModTime, curr->name);
         }
         else {
             switch (curr->type) {

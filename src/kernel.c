@@ -53,7 +53,7 @@ static void com(struct MemoryInfo* mbPtr) {
         if (strcmp(tokens[0], "") == 0) continue;
 
         cmd("help") {
-            fmtWrite("Available: help, echo, clear, calc, ping, uptime, uname, free, cat, ls, panic, reboot, shutdown");
+            fmtWrite("Available: help, echo, clear, calc, ping, uptime, uname, free, cat, ls, panic, reboot, shutdown\n");
         }
         cmd("echo") {
             for(int i = 1; i < tokenCount; i++) {
@@ -64,24 +64,24 @@ static void com(struct MemoryInfo* mbPtr) {
             clearScreen();
             continue;
         }
-        cmd("ping") fmtWrite("Pong!");
+        cmd("ping") fmtWrite("Pong!\n");
         cmd("uptime") {
             unsigned int seconds = sysTicks / 100;
-            fmtWrite("%d s", seconds);
+            fmtWrite("%d s\n", seconds);
         }
         cmd("uname") {
-            fmtWrite("lanternOS i386 v%s (built %s on %s)", VER, __BUILD_DATE__, __BUILD_ARCH__);
+            fmtWrite("lanternOS i386 v%s (built %s on %s)\n", VER, __BUILD_DATE__, __BUILD_ARCH__);
         }
         cmd("free") {
             unsigned int total = getTotalMem(mbPtr);
             unsigned int used = getUsedMem();
-            if (strcmp(tokens[1], "-m") == 0)      fmtWrite("total = %dm, used = %dm, free = %dm", total/1024, used/1024, (total - used)/1024);
-            else if (strcmp(tokens[1], "-g") == 0) fmtWrite("total = %dg, used = %dg, free = %dg", total/1024/1024, used/1024/1024, (total - used)/1024/1024);
-            else if (strcmp(tokens[1], "-b") == 0) fmtWrite("total = %db, used = %db, free = %db", total*1024, used*1024, (total - used)*1024);
-            else                                   fmtWrite("total = %dk, used = %dk, free = %dk", total, used, total - used);
+            if (strcmp(tokens[1], "-m") == 0)      fmtWrite("total = %dm, used = %dm, free = %dm\n", total/1024, used/1024, (total - used)/1024);
+            else if (strcmp(tokens[1], "-g") == 0) fmtWrite("total = %dg, used = %dg, free = %dg\n", total/1024/1024, used/1024/1024, (total - used)/1024/1024);
+            else if (strcmp(tokens[1], "-b") == 0) fmtWrite("total = %db, used = %db, free = %db\n", total*1024, used*1024, (total - used)*1024);
+            else                                   fmtWrite("total = %dk, used = %dk, free = %dk\n", total, used, total - used);
         }
         cmd("panic") {
-            if (atoi(tokens[1]) > 21 || atoi(tokens[1]) == 34 || atoi(tokens[1]) == 9 || atoi(tokens[1]) == 15 || atoi(tokens[1]) == 18 || atoi(tokens[1]) == 20) fmtWrite("Unknown fault interrupt");
+            if (atoi(tokens[1]) > 21 || atoi(tokens[1]) == 34 || atoi(tokens[1]) == 9 || atoi(tokens[1]) == 15 || atoi(tokens[1]) == 18 || atoi(tokens[1]) == 20) fmtWrite("Unknown fault interrupt\n");
             if (tokenCount == 2) sendInterrupt(atoi(tokens[1]));
             else userPanic();
         }
@@ -90,11 +90,12 @@ static void com(struct MemoryInfo* mbPtr) {
             //ataRead(0, buf);
             tarLoad();
             tarList(tokens[1]);
+            fmtWrite("\n");
         }
         cmd("cat") {
             tarLoad();
             tarPrintFile(tokens[1]);
-            continue;
+            fmtWrite("\n");
         }
         cmd("reboot")   reboot();
         cmd("shutdown") shutdown();
@@ -117,7 +118,7 @@ static void com(struct MemoryInfo* mbPtr) {
             //fmtWrite("Unknown command: %s", tokens[0]);
         }
 
-        fmtWrite("\n");
+        //fmtWrite("\n");
         #undef cmd
     }
 }
@@ -135,7 +136,7 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
     init(initGdt(), "GDT");
     init(__asm__ volatile("sti"), "interrupts");
     init(ataIdentify(), "ATA");
-    init(tarLoad(), "tar drivers");
+    init(tarLoad(), "tar driver");
     init(initTimer(100), "timer");
 
     api.fmtWrite  = fmtWrite;

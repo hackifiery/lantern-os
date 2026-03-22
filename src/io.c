@@ -29,6 +29,25 @@ unsigned char keymapShifted[128] = {
  '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?',   0, '*',   0, ' '
 };
 
+static void scroll(void) {
+    // move every line up by one
+    for (int y = 0; y < VGA_H - 1; y++) {
+        for (int x = 0; x < VGA_W; x++) {
+            int dst = (y * VGA_W + x) * 2;
+            int src = ((y + 1) * VGA_W + x) * 2;
+            VGA_START[dst]     = VGA_START[src];
+            VGA_START[dst + 1] = VGA_START[src + 1];
+        }
+    }
+    // clear the last line
+    for (int x = 0; x < VGA_W; x++) {
+        int offset = ((VGA_H - 1) * VGA_W + x) * 2;
+        VGA_START[offset]     = ' ';
+        VGA_START[offset + 1] = COLOR;
+    }
+    cursorY = VGA_H - 1;
+}
+
 void keyboardHandler(void) {
     unsigned char scancode = inb(0x60);
 
@@ -106,6 +125,7 @@ void advanceCursor(void) {
         cursorY++;
         cursorX = 0;
     }
+    else if (cursorY >= VGA_H) scroll();
     else cursorX++;
     moveCursor(cursorX, cursorY);
 }
@@ -142,6 +162,7 @@ void writeChar(char c) {
         cursorY++;
     }
     if (SERIAL) writeSerial(c);
+    if (cursorY >= VGA_H) scroll();
     moveCursor(cursorX, cursorY);
 }
 
