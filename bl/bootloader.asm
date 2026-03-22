@@ -114,7 +114,7 @@ A20:                     ; fast method
 
     ret
 
-loadKern:                ; needs: al (# of sectors to read), es:bx (buffer)
+loadKern:
     mov si, msgLoad
     call log
     
