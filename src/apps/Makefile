@@ -17,6 +17,12 @@ define COMPILE
 endef
 endif
 
+#define COMPILE
+#	$(CC) $(CFLAGS) -S -o $(1).s $(2)
+#	sed -i 's/call\t___main/nop\n\tnop\n\tnop\n\tnop\n\tnop/' $(1).s
+#	$(CC) $(CFLAGS) -o $(1) $(1).s
+#endef
+
 all: calc.bin hello.bin
 
 calc.elf: calc.c

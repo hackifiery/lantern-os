@@ -103,7 +103,7 @@ void tarList(const char* flag) {
     //fmtWrite("Directory listing of /\n");
     if (strcmp(flag, "-l") == 0) {
         fmtWrite("type  size         lastModify          name\n");
-        fmtWrite("====  =========  ===================== =================");
+        fmtWrite("===== ========= ================== ==================");
     }
     while (tarValid(curr)){
         if (strcmp(flag, "-l") == 0) {

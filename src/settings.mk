@@ -11,6 +11,9 @@ else
     LDFLAGS := -m elf_i386 -T linker.ld
 endif
 
+#CC      := i686-w64-mingw32-gcc
+#LD      := i686-w64-mingw32-ld
+#LDFLAGS := -m i386pe -T linker.ld
 
 OBJCOPY := objcopy
 DATE     := $(shell date)

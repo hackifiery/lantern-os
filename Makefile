@@ -18,7 +18,7 @@ img: src
 	dd if=$(BOOT_BIN) of=$(IMG) bs=512 seek=0 count=1 conv=notrunc
 	dd if=$(KERNEL_BIN) of=$(IMG) bs=512 seek=1 count=100 conv=notrunc
 	echo "hello" > hello.txt
-	tar --format=ustar -cf archive.tar hello.txt calc hello
+	tar -cf archive.tar hello.txt calc hello
 	dd if=archive.tar of=$(IMG) seek=101 bs=512 count=100 conv=notrunc
 	rm -rf hello.txt archive.tar calc hello
 
