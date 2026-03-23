@@ -102,19 +102,19 @@ void tarList(const char* flag) {
     struct TarHeader *curr = (struct TarHeader *)tarBuf;
     //fmtWrite("Directory listing of /\n");
     if (strcmp(flag, "-l") == 0) {
-        fmtWrite("type  size  lastModify          name\n");
-        fmtWrite("=====================================================");
+        fmtWrite("type  size         lastModify          name\n");
+        fmtWrite("====  =========  ===================== =================");
     }
     while (tarValid(curr)){
         if (strcmp(flag, "-l") == 0) {
             fmtWrite("\n");
             switch (curr->type) {
-                case TAR_FILE: fmtWrite("[file]"); break;
-                case TAR_DIR:  fmtWrite("[dir] "); break;
-                default:       fmtWrite("[????]"); break;
+                case TAR_FILE: fmtWrite("file"); break;
+                case TAR_DIR:  fmtWrite("dir "); break;
+                default:       fmtWrite("????"); break;
             }
             {unsigned long unixDate = oct2bin(curr->lastModTime, 11); struct Datetime dt; unix2date(unixDate, &dt);
-            fmtWrite("%5d %02d-%02d-%04d@%02d:%02d:%02d %s", oct2bin(curr->size, 11), dt.month, dt.day, dt.year, dt.hour, dt.minute, dt.second, curr->name);
+            fmtWrite("   %8d %02d-%02d-%04d@%02d:%02d:%02d %s", oct2bin(curr->size, 11), dt.month, dt.day, dt.year, dt.hour, dt.minute, dt.second, curr->name);
             }
         }
         else {
