@@ -1,5 +1,6 @@
 #define KERN
 #include "io.h"
+#include "kstdint.h"
 #include "sys.h"
 #include "idt.h"
 #include "ustar.h"
@@ -28,7 +29,7 @@ static int tokenize(char* str, char** tokens, int max_tokens) {
 void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
     char input[256];
     char* tokens[16];
-    unsigned short dskBuf[256];
+    uint16_t dskBuf[256];
 
     for(;;) {
         fmtWrite("sh > ");
@@ -74,7 +75,7 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
             else userPanic();
         }
         cmd("ls") {
-            //unsigned short buf[256];
+            //uint16_t buf[256];
             //ataRead(0, buf);
             tarLoad();
             tarList(tokens[1]);
@@ -91,8 +92,8 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
             int size = tarReadFile(tokens[0], &data);
             if (size == 0) { fmtWrite("not found: %s\n", tokens[0]); continue; }
             // copy to 0x200000
-            unsigned char *dest = (unsigned char *)0x200000;
-            for (int i = 0; i < size; i++) dest[i] = ((unsigned char *)data)[i];
+            uint8_t *dest = (uint8_t *)0x200000;
+            for (int i = 0; i < size; i++) dest[i] = ((uint8_t *)data)[i];
             // jump to it
             /*DEBUG:fmtWrite("api addr: %x\n", (unsigned int)&api);
             fmtWrite("api.fmtWrite: %x\n", (unsigned int)api.fmtWrite);

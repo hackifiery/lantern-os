@@ -1,5 +1,6 @@
 #define KERN
 #include "io.h"
+#include "kstdint.h"
 #include "string_utils.h"
 #include "idt.h"
 #include "sys.h"
@@ -48,7 +49,7 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
 /* DEBUG
 void kmain() {
     clearScreen();
-    unsigned short* vga = (unsigned short*)0xb8000;
+    uint16_t* vga = (uint16_t*)0xb8000;
     vga[0] = 0x1f41; // Blue background, White 'A'
 
     initSerial();

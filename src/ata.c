@@ -1,7 +1,8 @@
 #include "io.h"
+#include "kstdint.h"
 #include "ata.h"
 #include "sys.h"
-typedef unsigned char uc;
+typedef uint8_t uint8_t;
 /*
 Error Register
 Bit     Abbreviation    Function
@@ -40,7 +41,7 @@ Bit     Abbreviation    Function
 static int waitDrive(void) {
     // Wait for BSY to clear
     for (int i = 0; i < 10000; i++) {
-        uc status = inb(ATA_SR);
+        uint8_t status = inb(ATA_SR);
         if (!(status & ATA_SR_BSY)) break;
         for (volatile int j = 0; j < 100; j++);
         if (i == 9999) return 0;  // Timeout
@@ -48,7 +49,7 @@ static int waitDrive(void) {
     
     // Wait for DRQ to set
     for (int i = 0; i < 10000; i++) {
-        uc status = inb(ATA_SR);
+        uint8_t status = inb(ATA_SR);
         if (status & ATA_SR_DRQ) return 1;
         if (status & ATA_SR_ERR) return 0;  // Error occurred
         for (volatile int j = 0; j < 100; j++);
@@ -56,9 +57,9 @@ static int waitDrive(void) {
     return 0;  // Timeout
 }
 
-int ataWait(unsigned char mask, unsigned char value, int timeout) {
+int ataWait(uint8_t mask, uint8_t value, int timeout) {
     for (int i = 0; i < timeout; i++) {
-        uc status = inb(ATA_SR);
+        uint8_t status = inb(ATA_SR);
         if ((status & mask) == value) return 1;
         for (volatile int j = 0; j < 100; j++);
     }
@@ -72,10 +73,10 @@ int ataIdentify(void) {
     outb(ATA_LBA_M, 0);
     outb(ATA_LBA_H, 0);
     waitDrive();
-    // unsigned char x = inb(ATA_COMM);
-    outb(ATA_COMM, (uc)ATA_COMM_IDENT);
-    uc status = inb(ATA_SR);
-    {unsigned short _[256]; ataRead(0, _);} // prime the ata
+    // uint8_t x = inb(ATA_COMM);
+    outb(ATA_COMM, (uint8_t)ATA_COMM_IDENT);
+    uint8_t status = inb(ATA_SR);
+    {uint16_t _[256]; ataRead(0, _);} // prime the ata
 
     if (status == 0) {
         fmtWrite("ata: no drive\n");
@@ -86,25 +87,25 @@ int ataIdentify(void) {
     if (!ataWait(1 << ATA_SR_BSY, 0, 10000)) return 0;
     if (!ataWait(1 << ATA_SR_DRQ, 1 << ATA_SR_DRQ, 10000)) return 0;
 }
-void ataRead(unsigned int lba, unsigned short *buf) {
+void ataRead(unsigned int lba, uint16_t *buf) {
     outb(ATA_HEAD, 0xE0 | ((lba >> 24) & 0x0F));
     outb(ATA_ERR, 0);
     outb(ATA_SEC_COUNT, 1);
-    outb(ATA_LBA_L, (uc)lba);
-    outb(ATA_LBA_M, (uc)(lba >> 8));
-    outb(ATA_LBA_H, (uc)(lba >> 16));
+    outb(ATA_LBA_L, (uint8_t)lba);
+    outb(ATA_LBA_M, (uint8_t)(lba >> 8));
+    outb(ATA_LBA_H, (uint8_t)(lba >> 16));
     outb(ATA_COMM, ATA_COMM_READ);
     waitDrive();
     // 256 w (512 b)
     for (unsigned int i = 0; i < 256; i++) buf[i] = inw(ATA_DATA);
 }
-void ataWrite(unsigned int lba, unsigned short *buf) {
+void ataWrite(unsigned int lba, uint16_t *buf) {
     outb(ATA_HEAD, 0xE0 | ((lba >> 24) & 0x0F));
     outb(ATA_ERR, 0);
     outb(ATA_SEC_COUNT, 1);
-    outb(ATA_LBA_L, (uc)lba);
-    outb(ATA_LBA_M, (uc)(lba >> 8));
-    outb(ATA_LBA_H, (uc)(lba >> 16));
+    outb(ATA_LBA_L, (uint8_t)lba);
+    outb(ATA_LBA_M, (uint8_t)(lba >> 8));
+    outb(ATA_LBA_H, (uint8_t)(lba >> 16));
     outb(ATA_COMM, ATA_COMM_WRITE);
     waitDrive();
     // 256 w (512 b)
@@ -121,20 +122,20 @@ unsigned int ataGetSectorCount(void) {
     outb(ATA_SEC_COUNT, 0);
     outb(ATA_COMM, ATA_COMM_IDENT);
 
-    uc status = inb(ATA_SR);
+    uint8_t status = inb(ATA_SR);
     if (status == 0 || status == 0xFF) return 0;  // No drive
 
     if (!ataWait(ATA_SR_BSY, 0, 10000)) return 0;
     if (!ataWait(ATA_SR_DRQ, ATA_SR_DRQ, 10000)) return 0;
 
-    unsigned short buf[256];
+    uint16_t buf[256];
     for (int i = 0; i < 256; i++) buf[i] = inw(ATA_DATA);
 
     // 48-bit
     if (buf[83] & (1 << 10)) {
-        return ((unsigned int)buf[101] << 16) | buf[100];
+        return ((uint32_t)buf[101] << 16) | buf[100];
     } else {
         // 28-bit
-        return ((unsigned int)buf[61] << 16) | buf[60];
+        return ((uint32_t)buf[61] << 16) | buf[60];
     }
 }

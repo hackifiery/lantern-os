@@ -1,5 +1,6 @@
 #include "idt.h"
 #include "io.h"
+#include "kstdint.h"
 #include "sys.h"
 struct idtEntry idt[256];
 struct idtPtr idtp;
@@ -19,7 +20,7 @@ void remapPic(void) {
     outb(0xA1, 0x0);
 }
 
-void setIdtGate(unsigned char num, unsigned int base) {
+void setIdtGate(uint8_t num, unsigned int base) {
     idt[num].base_lo = (base & 0xFFFF);
     idt[num].base_hi = (base >> 16) & 0xFFFF;
     idt[num].sel     = 0x08;
@@ -111,8 +112,8 @@ void initTimer(unsigned int frequency) {
     outb(0x43, 0x36);
 
     // Split the divisor into two bytes and send them to the PIT
-    outb(0x40, (unsigned char)(divisor & 0xFF));
-    outb(0x40, (unsigned char)((divisor >> 8) & 0xFF));
+    outb(0x40, (uint8_t)(divisor & 0xFF));
+    outb(0x40, (uint8_t)((divisor >> 8) & 0xFF));
 }
 
 void fault(struct Registers *r) {

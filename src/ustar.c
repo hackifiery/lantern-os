@@ -2,22 +2,24 @@
 #include "ata.h"
 #include "string_utils.h"
 #include "io.h"
+#include "kstdint.h"
 
 #define TAR_MAX_SECTORS 64  // 32 kb
 #define TAR_START_LBA 101
 #define ceilDiv(x, y) (x / y + (x % y != 0))
 
-static unsigned short tarBuf[TAR_MAX_SECTORS * 256];
+static uint16_t tarBuf[TAR_MAX_SECTORS * 256];
+typedef unsigned long ul;
 //static char* cwd = "/";
 
 static struct Datetime{
     int year, month, day, hour, minute, second;
 };
 
-static void unix2date(long seconds, struct Datetime *dt) {
+static void unix2date(ul seconds, struct Datetime *dt) {
     // seconds into time of day
-    long days = seconds / 86400;
-    long rem = seconds % 86400;
+    ul days = seconds / 86400;
+    ul rem = seconds % 86400;
     
     dt->hour = rem / 3600;
     dt->minute = (rem % 3600) / 60;
@@ -49,9 +51,9 @@ static void unix2date(long seconds, struct Datetime *dt) {
     dt->day = (int)days + 1;    // 1-31
 }
 
-static int oct2bin(unsigned char *str, int size) {
+static int oct2bin(uint8_t *str, int size) {
     int n = 0;
-    unsigned char *c = str;
+    uint8_t *c = str;
     while (size-- > 0) {
         n *= 8;
         n += *c - '0';
@@ -61,8 +63,8 @@ static int oct2bin(unsigned char *str, int size) {
 }
 
 static int memcmp(const void *a, const void *b, unsigned int n) {
-    const unsigned char *pa = (const unsigned char *)a;
-    const unsigned char *pb = (const unsigned char *)b;
+    const uint8_t *pa = (const uint8_t *)a;
+    const uint8_t *pb = (const uint8_t *)b;
     for (unsigned int i = 0; i < n; i++) {
         if (pa[i] != pb[i]) return pa[i] - pb[i];
     }
@@ -76,12 +78,12 @@ static int tarValid(struct TarHeader *th) {
 
 // note: tarNext DOES NOT MODIFY BUF!!! SET IT TO IT!!!
 static struct TarHeader *tarNext(struct TarHeader *th) {
-    int size = oct2bin((unsigned char *)th->size, 11);
+    int size = oct2bin((uint8_t *)th->size, 11);
     int blocks = ceilDiv(size, 512) + 1; // # of sectors to advance to the next file
-    return (struct TarHeader*)((unsigned char *)th + (blocks * 512));
+    return (struct TarHeader*)((uint8_t *)th + (blocks * 512));
 }
 
-static struct TarHeader *tarFind(unsigned char *buf, const char *fname) {
+static struct TarHeader *tarFind(uint8_t *buf, const char *fname) {
     struct TarHeader *curr = (struct TarHeader*) buf;
     while (tarValid(curr)) {
         if (strcmp(curr->name, fname) == 0) return curr;
@@ -91,7 +93,7 @@ static struct TarHeader *tarFind(unsigned char *buf, const char *fname) {
 }
 
 // returns file size
-int tarRead(unsigned char *buf, char *fname, char **dataPtr) {
+int tarRead(uint8_t *buf, char *fname, char **dataPtr) {
     struct TarHeader *th = tarFind(buf, fname);
     if (!th) return 0;
     *dataPtr = (char*)th + 512;
@@ -130,7 +132,7 @@ void tarList(const char* flag) {
 
 void tarPrintFile(const char *fname) {
     char *data;
-    const unsigned int size = tarRead((unsigned char*)tarBuf, fname, &data);
+    const unsigned int size = tarRead((uint8_t*)tarBuf, fname, &data);
     if (!size) {fmtWrite("%s not found\n", fname); return;}
     for (int i = 0; i < size; i++) fmtWrite("%c", data[i]); // safer than directly printing data
 }
@@ -140,5 +142,5 @@ void tarLoad(void) {
 }
 
 int tarReadFile(const char *fname, char **out) {
-    return tarRead((unsigned char *)tarBuf, (char *)fname, out);
+    return tarRead((uint8_t *)tarBuf, (char *)fname, out);
 }

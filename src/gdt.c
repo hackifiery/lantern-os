@@ -1,4 +1,5 @@
 #include "gdt.h"
+#include "kstdint.h"
 
 // 3 entries: Null, Code, and Data
 struct GdtEntry gdt[3];
@@ -6,7 +7,7 @@ struct GdtPtr gdtp;
 
 extern void gdtFlush(unsigned int a);
 
-void setGdtGate(int num, unsigned int base, unsigned int limit, unsigned char access, unsigned char gran) {
+void setGdtGate(int num, unsigned int base, unsigned int limit, uint8_t access, uint8_t gran) {
     gdt[num].baseLow    = (base & 0xFFFF);
     gdt[num].baseMiddle = (base >> 16) & 0xFF;
     gdt[num].baseHigh   = (base >> 24) & 0xFF;

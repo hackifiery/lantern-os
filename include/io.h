@@ -1,5 +1,6 @@
 #ifndef LANTERN_IO_H
 #define LANTERN_IO_H
+#include "kstdint.h"
 
 enum VGAColor {
     BLACK = 0, BLUE = 1, GREEN = 2, CYAN = 3,
@@ -9,11 +10,11 @@ enum VGAColor {
     YELLOW = 14, WHITE = 15
 };
 
-static inline unsigned char vgaColor(enum VGAColor fg, enum VGAColor bg) {
+static inline uint8_t vgaColor(enum VGAColor fg, enum VGAColor bg) {
     return (bg << 4) | (fg & 0x0F);
 }
 
-extern unsigned char COLOR;
+extern uint8_t COLOR;
 
 #define VGA_W 80
 #define VGA_H 25
@@ -27,25 +28,25 @@ typedef __builtin_va_list va_list;
 #define va_end(v)     __builtin_va_end(v)
 
 extern unsigned int cursorX, cursorY;
-extern unsigned char keymap[128], keymapShifted[128];
+extern uint8_t keymap[128], keymapShifted[128];
 extern int shiftActive, capsLockActive;
 
-static inline void outb(unsigned short port, unsigned char val) {
+static inline void outb(uint16_t port, uint8_t val) {
     __asm__ volatile ("outb %0, %1" : : "a"(val), "Nd"(port));
 }
 
-static inline unsigned char inb(unsigned short port) {
-    unsigned char ret;
+static inline uint8_t inb(uint16_t port) {
+    uint8_t ret;
     __asm__ volatile ("inb %1, %0" : "=a"(ret) : "Nd"(port));
     return ret;
 }
 
-static inline void outw(unsigned short port, unsigned short data) {
+static inline void outw(uint16_t port, uint16_t data) {
     __asm__ volatile ("outw %w0, %w1" : : "a"(data), "Nd"(port));
 }
 
-static unsigned short inw(unsigned short port) {
-    unsigned short result;
+static uint16_t inw(uint16_t port) {
+    uint16_t result;
     __asm__ volatile ("inw %1, %0" : "=a"(result) : "dN"(port));
     return result;
 }

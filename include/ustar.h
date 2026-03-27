@@ -1,6 +1,8 @@
 #ifndef LANTERN_TAR_H
 #define LANTERN_TAR_H
 
+#include "kstdint.h"
+
 #define TAR_FILE   '0'
 #define TAR_HLINK  '1'
 #define TAR_SLINK  '2'
@@ -29,7 +31,7 @@ struct TarHeader {
     char _[12]; // padding
 };
 
-int tarRead(unsigned char *buf, char *fname, char **dataPtr);
+int tarRead(uint8_t *buf, char *fname, char **dataPtr);
 int tarReadFile(const char *fname, char **out);
 void tarPrintFile(const char *fname);
 void tarList(const char* flag);

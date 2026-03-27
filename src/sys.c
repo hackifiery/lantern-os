@@ -1,5 +1,6 @@
 #include "sys.h"
 #include "io.h"
+#include "kstdint.h"
 //#include <stdint.h>
 
 extern unsigned int _kernelStart;
@@ -25,7 +26,7 @@ unsigned int getTotalMem(struct MemoryInfo* mem) {
         }
     }
     // fmtWrite("\n");
-    /*nsigned char* raw = (unsigned char*)0x7004;
+    /*nsigned char* raw = (uint8_t*)0x7004;
     for(int i = 0; i < 24; i++) {
         fmtWrite("%d ", raw[i]);
     }*/

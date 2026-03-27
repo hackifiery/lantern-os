@@ -1,10 +1,11 @@
 #include "io.h"
+#include "kstdint.h"
 #include "serial.h"
 
 #define SERIAL 1
 #define BUFFER_SIZE 256
 
-unsigned char COLOR = 0x02;
+uint8_t COLOR = 0x02;
  //(15 << 4) | (0 & 0x0F);
 
 unsigned int cursorX = 0, cursorY = 0;
@@ -15,14 +16,14 @@ volatile int tail = 0; // Where the program reads
 int shiftActive = 0;
 int capsLockActive = 0;
 
-unsigned char keymap[128] = {
+uint8_t keymap[128] = {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	'9', '0', '-', '=', '\b',
   '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',
     0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`',   0,
  '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/',   0, '*',   0, ' '
 };
 
-unsigned char keymapShifted[128] = {
+uint8_t keymapShifted[128] = {
     0,  27, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b',
   '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',
     0,  'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~',   0,
@@ -49,11 +50,11 @@ static void scroll(void) {
 }
 
 void keyboardHandler(void) {
-    unsigned char scancode = inb(0x60);
+    uint8_t scancode = inb(0x60);
 
     // Check for "Break" codes (Key Released)
     if (scancode & 0x80) {
-        unsigned char released = scancode & 0x7F;
+        uint8_t released = scancode & 0x7F;
         if (released == 0x2A || released == 0x36) {
             shiftActive = 0;
         }
@@ -111,13 +112,13 @@ void disableCursor(void) {
 }
 
 void moveCursor(int x, int y) {
-    unsigned short pos = y * VGA_W + x;
+    uint16_t pos = y * VGA_W + x;
 
     outb(0x3D4, 0x0E); // Register 0x0E: Cursor Location High
-    outb(0x3D5, (unsigned char)((pos >> 8) & 0xFF));
+    outb(0x3D5, (uint8_t)((pos >> 8) & 0xFF));
 
     outb(0x3D4, 0x0F); // Register 0x0F: Cursor Location Low
-    outb(0x3D5, (unsigned char)(pos & 0xFF));
+    outb(0x3D5, (uint8_t)(pos & 0xFF));
 }
 
 void advanceCursor(void) {

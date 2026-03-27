@@ -25,7 +25,7 @@ img: src
 run: img
 	qemu-system-i386 \
 		-drive format=raw,file=$(IMG),index=0,if=ide \
-		-m 64 #-display curses
+		-m 64 -display curses
 
 clean:
 	$(MAKE) -C src clean

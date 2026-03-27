@@ -1,6 +1,8 @@
 #ifndef LANTERN_SYS_H
 #define LANTERN_SYS_H
 
+#include "kstdint.h"
+
 /*struct multibootInfo {
     unsigned int flags;
     unsigned int mem_lower;
@@ -13,9 +15,9 @@
 } __attribute__((packed));*/
 
 struct Registers {
-    unsigned int edi, esi, ebp, esp, ebx, edx, ecx, eax;
-    unsigned int int_no, err_code;
-    unsigned int eip, cs, eflags;
+    uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
+    uint32_t int_no, err_code;
+    uint32_t eip, cs, eflags;
 };
 
 struct E820Entry {

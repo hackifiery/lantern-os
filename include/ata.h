@@ -1,5 +1,6 @@
 #ifndef ATA_H
 #define ATA_H
+#include "kstdint.h"
 
 #define ATA_PRIM_OFFSET 0x1F0
 #define ATA_DATA        (ATA_PRIM_OFFSET)
@@ -25,9 +26,9 @@
 #define ATA_COMM_FLUSH  0xE7
 
 int ataIdentify(void);
-void ataRead(unsigned int lba, unsigned short *buf);
-void ataWrite(unsigned int lba, unsigned short *buf);
+void ataRead(unsigned int lba, uint16_t *buf);
+void ataWrite(unsigned int lba, uint16_t *buf);
 unsigned int ataGetSectorCount(void);
-int ataWait(unsigned char mask, unsigned char value, int timeout);
+int ataWait(uint8_t mask, uint8_t value, int timeout);
 
 #endif

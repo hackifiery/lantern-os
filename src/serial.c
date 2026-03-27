@@ -1,4 +1,5 @@
 #include "io.h"
+#include "kstdint.h"
 #define COM1 0x3F8
 
 int initSerial(void) {
