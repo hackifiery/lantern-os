@@ -81,6 +81,16 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
             tarList(tokens[1]);
             fmtWrite("\n");
         }
+        cmd("rm") {
+            if (tarRm(tokens[1])) {
+                //fmtWrite("removed from buffer\n");
+                tarFlush();
+                //fmtWrite("flushed to disk\n");
+                //tarLoad();
+                //fmtWrite("reloaded, verifying...\n");
+                //tarList(tokens[1]);
+            }
+        }
         cmd("cat") {
             tarLoad();
             tarPrintFile(tokens[1]);

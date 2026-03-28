@@ -5,10 +5,12 @@
 #include "kstdint.h"
 
 #define TAR_MAX_SECTORS 64  // 32 kb
+#define TAR_BUF_SIZE (TAR_MAX_SECTORS * 512)
 #define TAR_START_LBA 101
 #define ceilDiv(x, y) (x / y + (x % y != 0))
 
-static uint16_t tarBuf[TAR_MAX_SECTORS * 256];
+static uint8_t tarBuf[TAR_BUF_SIZE];
+
 typedef unsigned long ul;
 //static char* cwd = "/";
 
@@ -132,15 +134,42 @@ void tarList(const char* flag) {
 
 void tarPrintFile(const char *fname) {
     char *data;
-    const unsigned int size = tarRead((uint8_t*)tarBuf, fname, &data);
+    const unsigned int size = tarRead(tarBuf, fname, &data);
     if (!size) {fmtWrite("%s not found\n", fname); return;}
     for (int i = 0; i < size; i++) fmtWrite("%c", data[i]); // safer than directly printing data
 }
 
 void tarLoad(void) {
-    for (unsigned int i = 0; i < TAR_MAX_SECTORS; i++) ataRead(TAR_START_LBA + i, tarBuf + (i * 256));
+    for (unsigned int i = 0; i < TAR_MAX_SECTORS; i++) ataRead(TAR_START_LBA + i, (uint16_t *)(tarBuf + (i * 512)));
+}
+
+void tarFlush(void) {
+    //fmtWrite("after rm, first entry: %s\n", ((struct TarHeader*)tarBuf)->name);
+    for (unsigned int i = 0; i < TAR_MAX_SECTORS; i++) ataWrite(TAR_START_LBA + i, (uint16_t *)(tarBuf + (i * 512)));
 }
 
 int tarReadFile(const char *fname, char **out) {
-    return tarRead((uint8_t *)tarBuf, (char *)fname, out);
+    return tarRead(tarBuf, (char *)fname, out);
+}
+
+int tarRm(const char *fname) {
+    {char *tmp;
+    if (!tarReadFile(fname, &tmp)) return 0;}
+
+    struct TarHeader *toDel = tarFind(tarBuf, fname);
+    int fSize    = oct2bin((uint8_t *)toDel->size, 11);
+    int delBytes = (ceilDiv(fSize, 512) + 1) * 512;
+
+    uint8_t *buf      = tarBuf;
+    uint8_t *start    = (uint8_t *)toDel;
+    int      bufBytes = TAR_BUF_SIZE;
+    int      startIdx = start - buf;
+
+    for (int i = startIdx; i < bufBytes - delBytes; i++)
+        buf[i] = buf[i + delBytes];
+
+    for (int i = bufBytes - delBytes; i < bufBytes; i++)
+        buf[i] = 0;
+
+    return 1;
 }

@@ -66,6 +66,11 @@ int ataWait(uint8_t mask, uint8_t value, int timeout) {
     return 0;
 }
 int ataIdentify(void) {
+    if (!ataWait(ATA_SR_BSY, 0, 10000)) {
+        fmtWrite("ATA Timeout!\n");
+    }
+    if (!ataWait(ATA_SR_BSY, 0, 10000)) return 0;
+    if (!ataWait(ATA_SR_DRQ, ATA_SR_DRQ, 10000)) return 0;
     outb(ATA_HEAD, 0xA0);
     //fmtWrite("%x", *((int*)ATA_COMM_IDENT));
     //for(;;);
@@ -100,6 +105,8 @@ void ataRead(unsigned int lba, uint16_t *buf) {
     for (unsigned int i = 0; i < 256; i++) buf[i] = inw(ATA_DATA);
 }
 void ataWrite(unsigned int lba, uint16_t *buf) {
+    ataWait(ATA_SR_BSY, 0, 10000);  // wait for drive ready first
+
     outb(ATA_HEAD, 0xE0 | ((lba >> 24) & 0x0F));
     outb(ATA_ERR, 0);
     outb(ATA_SEC_COUNT, 1);
@@ -107,11 +114,12 @@ void ataWrite(unsigned int lba, uint16_t *buf) {
     outb(ATA_LBA_M, (uint8_t)(lba >> 8));
     outb(ATA_LBA_H, (uint8_t)(lba >> 16));
     outb(ATA_COMM, ATA_COMM_WRITE);
-    waitDrive();
-    // 256 w (512 b)
+
+    if (!ataWait(ATA_SR_DRQ, ATA_SR_DRQ, 10000)) return;  // wait for DRQ
     for (unsigned int i = 0; i < 256; i++) outw(ATA_DATA, buf[i]);
+
     outb(ATA_COMM, ATA_COMM_FLUSH);
-    ataWait(1 << ATA_SR_BSY, 0, 10000);
+    ataWait(ATA_SR_BSY, 0, 10000);  // wait for flush to complete
 }
 
 unsigned int ataGetSectorCount(void) {

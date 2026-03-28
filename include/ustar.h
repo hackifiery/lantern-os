@@ -36,4 +36,7 @@ int tarReadFile(const char *fname, char **out);
 void tarPrintFile(const char *fname);
 void tarList(const char* flag);
 void tarLoad(void);
+void tarFlush(void);
+int tarRm(const char *fname);
+
 #endif // LANTERN_TAR_H
