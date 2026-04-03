@@ -40,7 +40,7 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
     mem.entry_count = entryCount;
     mem.entries = entries;
 
-    fmtWrite("\nWelcome to the lanternCOM shell!\nReport bugs at https://github.com/hackifiery/lantern-os.\n");
+    fmtWrite("\nWelcome to the lanternOS shell\nReport bugs at https://github.com/hackifiery/lantern-os.\n");
     fmtWrite("Type 'help' for commands.\n\n");
     #undef init
     for (;;) sh(&mem, &api);
