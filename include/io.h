@@ -30,6 +30,8 @@ typedef __builtin_va_list va_list;
 extern unsigned int cursorX, cursorY;
 extern uint8_t keymap[128], keymapShifted[128];
 extern int shiftActive, capsLockActive;
+extern int eofTrigger;
+extern int blocking;
 
 static inline void outb(uint16_t port, uint8_t val) {
     __asm__ volatile ("outb %0, %1" : : "a"(val), "Nd"(port));

@@ -2,7 +2,7 @@
 #include "kstdint.h"
 #include "ata.h"
 #include "sys.h"
-typedef uint8_t uint8_t;
+
 /*
 Error Register
 Bit     Abbreviation    Function

@@ -1,11 +1,5 @@
 #include "api.h"
 
-#define fmtWrite  k->fmtWrite
-#define fmtGet    k->fmtGet
-#define sfmtWrite k->sfmtWrite
-#define strcmp    k->strcmp
-#define atoi      k->atoi
-
 static int tokenize(char* str, char** tokens, int max_tokens);
 
 void main(struct KernelAPI *k) {

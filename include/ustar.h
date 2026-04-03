@@ -3,6 +3,9 @@
 
 #include "kstdint.h"
 
+#define TAR_MAX_SECTORS 64  // 32 kb
+#define TAR_BUF_SIZE (TAR_MAX_SECTORS * 512)
+
 #define TAR_FILE   '0'
 #define TAR_HLINK  '1'
 #define TAR_SLINK  '2'
@@ -10,6 +13,8 @@
 #define TAR_BDEV   '4'
 #define TAR_DIR    '5'
 #define TAR_PIPE   '6'
+
+extern uint8_t tarBuf[TAR_BUF_SIZE];
 
 struct TarHeader {
     char name[100];
@@ -36,7 +41,11 @@ int tarReadFile(const char *fname, char **out);
 void tarPrintFile(const char *fname);
 void tarList(const char* flag);
 void tarLoad(void);
+struct TarHeader *tarNext(struct TarHeader *th);
+int tarValid(struct TarHeader *th);
 void tarFlush(void);
 int tarRm(const char *fname);
+int tarTouch(const char *fname);
+int tarEdit(const char *fname, const char *data, unsigned int size);
 
 #endif // LANTERN_TAR_H

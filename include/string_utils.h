@@ -7,5 +7,6 @@ int strcmp(const char *s1, const char *s2);
 void lower(char* str);
 void upper(char* str);
 unsigned int strlen(const char *s);
+char* strcpy(char* dest, const char* src);
 
 #endif // LANTERN_STRING_UTILS_H

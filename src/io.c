@@ -15,6 +15,9 @@ volatile int head = 0; // Where the interrupt writes
 volatile int tail = 0; // Where the program reads
 int shiftActive = 0;
 int capsLockActive = 0;
+int controlActive = 0;  // 0 = released, 1 = pressed
+int eofTrigger = 0;
+int blocking = 1;
 
 uint8_t keymap[128] = {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	'9', '0', '-', '=', '\b',
@@ -58,6 +61,7 @@ void keyboardHandler(void) {
         if (released == 0x2A || released == 0x36) {
             shiftActive = 0;
         }
+        if (released == 0x1D) controlActive = 0;
     } 
     // Check for "Make" codes (Key Pressed)
     else {
@@ -69,8 +73,38 @@ void keyboardHandler(void) {
             capsLockActive = !capsLockActive; // Toggle Caps
             goto end;
         }
+        if (scancode == 0x1D) { // ctrl press
+            controlActive = 1;
+            goto end;
+        }
+        if (scancode == 0x9D) { // ctrl release
+            controlActive = 0;
+            goto end;
+        }
 
         char c;
+        if (controlActive) {
+            char baseChar = keymap[scancode];
+            
+            // Check if it's a lowercase or uppercase letter
+            if (baseChar >= 'a' && baseChar <= 'z') {
+                c = baseChar - 'a' + 1; // 'a' (97) - 97 + 1 = 1
+            } else if (baseChar >= 'A' && baseChar <= 'Z') {
+                c = baseChar - 'A' + 1; // 'A' (65) - 65 + 1 = 1
+            } else {
+                c = baseChar; // Not a letter
+            }
+
+            switch (c) {
+                case 12: // Ctrl + L
+                    clearScreen();
+                    break;
+                case 4: // Ctrl + D
+                    eofTrigger = 1;
+                    break;
+            }
+            goto end; 
+        }
         // TODO: capslock only affects letters
         if (shiftActive ^ capsLockActive) {
             c = keymapShifted[scancode];
@@ -98,6 +132,7 @@ char getInput(void) {
     tail = (tail + 1) % BUFFER_SIZE;
     return c;
 }
+
 void enableCursor(unsigned int cursor_start, unsigned int cursor_end) {
 	outb(0x3D4, 0x0A);
 	outb(0x3D5, (inb(0x3D5) & 0xC0) | cursor_start);
@@ -184,6 +219,7 @@ void clearScreen(void) {
     cursorX = 0, cursorY = 0;
     moveCursor(0, 0);
 }
+
 
 
 
@@ -343,7 +379,7 @@ static void vsfmtGet(const char *src, const char *fmt, va_list args) {
                 }
                 case 's': {
                     char *dest = va_arg(args, char*);
-                    while (src[s_ptr] != '\0' && src[s_ptr] != '\n') {
+                    while (src[s_ptr] != '\0' /*&& src[s_ptr] != '\n'*/) {
                         *dest++ = src[s_ptr++];
                     }
                     *dest = '\0';
@@ -373,16 +409,20 @@ void sfmtGet(const char *src, const char *fmt, ...) {
 void fmtGet(const char *fmt, ...) {
     char input_buf[256];
     
-    // First, read the raw line from the keyboard
     int i = 0;
     while (1) {
         char c = 0;
-        while (!(c = getInput())); // Wait for key
+        while (!(c = getInput())) {
+            if (eofTrigger) { writeChar('\n'); goto done; }  // break out of both loops
+        }
         
-        if (c == '\n') {
-            input_buf[i] = '\0';
+        if (c == '\n' && blocking) {
             writeChar('\n');
+            //input_buf[i++] = '\n';
             break;
+        } else if (c == '\n' && !blocking) {
+            input_buf[i++] = '\n';
+            writeChar('\n');
         } else if (c == '\b') {
             if (i > 0) { i--; writeChar('\b'); }
         } else if (i < 255) {
@@ -391,7 +431,11 @@ void fmtGet(const char *fmt, ...) {
         }
     }
 
-    // Now parse it
+done:
+    eofTrigger = 0;
+    input_buf[i] = '\0';
+    //writeChar('\n');
+
     va_list args;
     va_start(args, fmt);
     vsfmtGet(input_buf, fmt, args);

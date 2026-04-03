@@ -4,12 +4,10 @@
 #include "io.h"
 #include "kstdint.h"
 
-#define TAR_MAX_SECTORS 64  // 32 kb
-#define TAR_BUF_SIZE (TAR_MAX_SECTORS * 512)
 #define TAR_START_LBA 101
 #define ceilDiv(x, y) (x / y + (x % y != 0))
 
-static uint8_t tarBuf[TAR_BUF_SIZE];
+uint8_t tarBuf[TAR_BUF_SIZE];
 
 typedef unsigned long ul;
 //static char* cwd = "/";
@@ -17,7 +15,6 @@ typedef unsigned long ul;
 static struct Datetime{
     int year, month, day, hour, minute, second;
 };
-
 static void unix2date(ul seconds, struct Datetime *dt) {
     // seconds into time of day
     ul days = seconds / 86400;
@@ -64,6 +61,38 @@ static int oct2bin(uint8_t *str, int size) {
     return n;
 }
 
+void bin2oct(unsigned int num, char* str) {
+    char temp[12];
+    int i = 0;
+
+    // Handle 0 explicitly
+    if (num == 0) {
+        str[0] = '0'; // Assign '0' to the first index
+        str[1] = '\0'; // Null-terminate at the second index
+        return;
+    }
+
+    // Convert to octal digits in reverse
+    while (num > 0) {
+        temp[i++] = (num % 8) + '0';
+        num /= 8;
+    }
+
+    // Reverse the string into the destination
+    int j = 0;
+    while (i > 0) {
+        str[j++] = temp[--i];
+    }
+    str[j] = '\0';
+}
+
+void bin2oct_padded(unsigned int num, char* str, int width) {
+    for (int i = width - 1; i >= 0; i--) {
+        str[i] = (num % 8) + '0';
+        num /= 8;
+    }
+}
+
 static int memcmp(const void *a, const void *b, unsigned int n) {
     const uint8_t *pa = (const uint8_t *)a;
     const uint8_t *pb = (const uint8_t *)b;
@@ -73,16 +102,28 @@ static int memcmp(const void *a, const void *b, unsigned int n) {
     return 0;
 }
 
-static int tarValid(struct TarHeader *th) {
+int tarValid(struct TarHeader *th) {
+    //fmtWrite("checking header: %s\n", th->ustar);
     if (memcmp(th->ustar, "ustar", 5) == 0) return 1;
     else return 0;
 }
 
 // note: tarNext DOES NOT MODIFY BUF!!! SET IT TO IT!!!
-static struct TarHeader *tarNext(struct TarHeader *th) {
+struct TarHeader *tarNext(struct TarHeader *th) {
     int size = oct2bin((uint8_t *)th->size, 11);
     int blocks = ceilDiv(size, 512) + 1; // # of sectors to advance to the next file
     return (struct TarHeader*)((uint8_t *)th + (blocks * 512));
+}
+
+
+static struct TarHeader *tarGetEnd(uint8_t *buf) {
+    struct TarHeader *curr = (struct TarHeader*)buf;
+    // iterate through valid files
+    while (tarValid(curr)) {
+        curr = tarNext(curr);
+    }
+    // curr now points to the first 512-byte block of zeros (the EOA)
+    return curr;
 }
 
 static struct TarHeader *tarFind(uint8_t *buf, const char *fname) {
@@ -172,4 +213,38 @@ int tarRm(const char *fname) {
         buf[i] = 0;
 
     return 1;
+}
+
+int tarTouch(const char *fname) {
+    char *dummy;
+    if (tarReadFile(fname, &dummy)) {
+        return 1;
+    }
+    struct TarHeader *th = (struct TarHeader *)tarGetEnd(tarBuf);
+    strcpy(th->name, fname);
+    bin2oct_padded(0777, th->mode, 7);
+    bin2oct_padded(0, th->ownerID, 7);
+    bin2oct_padded(0, th->groupID, 7);
+    bin2oct_padded(0, th->size, 11);
+    th->type = '0'; 
+    strcpy(th->ustar, "ustar");
+    th->ustarVer[0] = '0', th->ustarVer[1] = '0';
+
+    strcpy(th->ownerName, "root");
+    strcpy(th->ownerGroup, "root");
+    for (int i = 0; i < 8; i++) th->checksum[i] = ' ';
+
+    return 0;
+}
+
+int tarEdit(const char *fname, const char *data, unsigned int size) {
+    struct TarHeader *th = tarFind(tarBuf, fname);
+    if (!th) return 1;
+    tarRm(fname);
+    if (tarTouch(fname)) return 1;
+    th = tarFind(tarBuf, fname); // get the new header after appending
+    bin2oct_padded(size, th->size, 11);
+    char *dataPtr = (char *)th + 512;
+    for (int i = 0; i < size; i++) dataPtr[i] = data[i];
+    return 0;
 }

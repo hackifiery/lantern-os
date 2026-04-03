@@ -33,3 +33,9 @@ unsigned int strlen(const char *s) {
     while (s[n]) n++;
     return n;
 }
+
+char* strcpy(char* dest, const char* src) {
+    char* temp = dest;
+    while ((*dest++ = *src++) != '\0');
+    return temp;
+}

@@ -42,9 +42,20 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
         if (strcmp(tokens[0], "") == 0) continue;
 
         cmd("help") {
-            fmtWrite("Available: help, echo, clear, calc, ping, uptime, uname, free, cat, ls, panic, reboot, shutdown\n");
+            fmtWrite("Available: help, echo, clear, ping, uptime, uname, free, cat, ls, panic, reboot, shutdown\n");
         }
         cmd("echo") {
+            if (strcmp(tokens[1], ">") == 0) {
+                tarLoad();
+                blocking = 0;
+                char buf[256];
+                fmtGet("%s", buf);
+                buf[strlen(buf)] = '\n'; // echo adds newline
+                buf[strlen(buf)] = '\0';
+                tarEdit(tokens[2], buf, strlen(buf));
+                tarFlush();
+                blocking = 1;
+            }
             for(int i = 1; i < tokenCount; i++) {
                 fmtWrite("%s ", tokens[i]);
             }
@@ -93,7 +104,28 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
         }
         cmd("cat") {
             tarLoad();
-            tarPrintFile(tokens[1]);
+            if (strcmp(tokens[1], ">") == 0) {
+                blocking = 0;
+                //fmtWrite("\n");
+                char buf[256];
+                fmtGet("%s", buf);
+                tarEdit(tokens[2], buf, strlen(buf));
+                tarFlush();
+                blocking = 1;
+            }
+            else {
+                /*DEBUG: struct TarHeader *h = (struct TarHeader *)tarBuf;
+                fmtWrite("first 4 entries after load:\n");
+                for (int i = 0; i < 4 && tarValid(h); i++) {
+                    fmtWrite("  '%s'\n", h->name);
+                    h = tarNext(h);
+                }*/
+                tarPrintFile(tokens[1]);
+            }
+        }
+        cmd("touch") {
+            tarTouch(tokens[1]);
+            tarFlush();
         }
         cmd("reboot")   reboot();
         cmd("shutdown") shutdown();
@@ -105,7 +137,7 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
             uint8_t *dest = (uint8_t *)0x200000;
             for (int i = 0; i < size; i++) dest[i] = ((uint8_t *)data)[i];
             // jump to it
-            /*DEBUG:fmtWrite("api addr: %x\n", (unsigned int)&api);
+            /*DEBUG: fmtWrite("api addr: %x\n", (unsigned int)&api);
             fmtWrite("api.fmtWrite: %x\n", (unsigned int)api.fmtWrite);
             fmtWrite("jumping to: %x\n", (unsigned int)0x200000);
             fmtWrite("calc bytes: %02x %02x %02x %02x\n",
