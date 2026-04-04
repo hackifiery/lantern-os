@@ -20,5 +20,4 @@ To run the image in qemu, run
 make run
 ```
 ### Windows
-~~If you're on windows, you have 2 options: use WSL and build for linux, or use some minGW toolchain (only cygwin has been tested). The instructions and prerequisites are the same as linux.~~
-Windows doesn't work at the moment, your only choice is to use WSL or a VM. will try to fix...
+If you're on windows, you have 2 options: use WSL and build for linux, or use some minGW toolchain (only cygwin has been tested). The instructions and prerequisites are the same as linux.
