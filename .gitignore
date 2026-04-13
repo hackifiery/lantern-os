@@ -6,3 +6,5 @@
 /calc
 **/*.s
 /hello
+/.vscode
+/*.tar

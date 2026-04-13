@@ -5,8 +5,7 @@
 #define SERIAL 1
 #define BUFFER_SIZE 256
 
-uint8_t COLOR = 0x02;
- //(15 << 4) | (0 & 0x0F);
+uint8_t COLOR = vgaColor(GREEN, BLACK);
 
 unsigned int cursorX = 0, cursorY = 0;
 
@@ -18,6 +17,7 @@ int capsLockActive = 0;
 int controlActive = 0;  // 0 = released, 1 = pressed
 int eofTrigger = 0;
 int blocking = 1;
+char arrow = '\0';
 
 uint8_t keymap[128] = {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	'9', '0', '-', '=', '\b',
@@ -54,6 +54,7 @@ static void scroll(void) {
 
 void keyboardHandler(void) {
     uint8_t scancode = inb(0x60);
+    //fmtWrite("scancode: %02x or %2d\n", scancode, scancode);
 
     // Check for "Break" codes (Key Released)
     if (scancode & 0x80) {
@@ -62,26 +63,46 @@ void keyboardHandler(void) {
             shiftActive = 0;
         }
         if (released == 0x1D) controlActive = 0;
+        if (released == 0x48 || released == 0x50 || released == 0x4B || released == 0x4D) { // arrows
+            arrow = '\0';
+        }
     } 
     // Check for "Make" codes (Key Pressed)
     else {
-        if (scancode == 0x2A || scancode == 0x36) {
-            shiftActive = 1;
-            goto end; // Don't put Shift into the text buffer
+        switch (scancode) {
+            case 0x2A: case 0x36: {
+                shiftActive = 1;
+                goto end; // Don't put Shift into the text buffer
+            }
+            case 0x3A: {
+                capsLockActive = !capsLockActive; // Toggle Caps
+                goto end;
+            }
+            case 0x1D: { // ctrl press
+                controlActive = 1;
+                goto end;
+            }
+            case 0x9D: { // ctrl release
+                controlActive = 0;
+                goto end;
+            }
+            case 0x48: { // up arrow
+                arrow = 'u';
+                goto end;
+            }
+            case 0x50: { // down arrow
+                arrow = 'd';
+                goto end;
+            }
+            case 0x4B: { // l arrow
+                arrow = 'l';
+                goto end;
+            }
+            case 0x4D: { // r arrow
+                arrow = 'r';
+                goto end;
+            }
         }
-        if (scancode == 0x3A) {
-            capsLockActive = !capsLockActive; // Toggle Caps
-            goto end;
-        }
-        if (scancode == 0x1D) { // ctrl press
-            controlActive = 1;
-            goto end;
-        }
-        if (scancode == 0x9D) { // ctrl release
-            controlActive = 0;
-            goto end;
-        }
-
         char c;
         if (controlActive) {
             char baseChar = keymap[scancode];
@@ -123,6 +144,7 @@ void keyboardHandler(void) {
     }
 
 end:
+    // fmtWrite("arrow: %c\n", arrow);
     outb(0x20, 0x20);
 }
 char getInput(void) {

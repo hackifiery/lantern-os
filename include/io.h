@@ -10,9 +10,11 @@ enum VGAColor {
     YELLOW = 14, WHITE = 15
 };
 
-static inline uint8_t vgaColor(enum VGAColor fg, enum VGAColor bg) {
+/*static inline uint8_t vgaColor(enum VGAColor fg, enum VGAColor bg) {
     return (bg << 4) | (fg & 0x0F);
-}
+}*/
+
+#define vgaColor(fg, bg) ((bg << 4) | (fg & 0x0F))
 
 extern uint8_t COLOR;
 
@@ -32,6 +34,7 @@ extern uint8_t keymap[128], keymapShifted[128];
 extern int shiftActive, capsLockActive;
 extern int eofTrigger;
 extern int blocking;
+extern char arrow;
 
 static inline void outb(uint16_t port, uint8_t val) {
     __asm__ volatile ("outb %0, %1" : : "a"(val), "Nd"(port));

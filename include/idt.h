@@ -6,7 +6,7 @@
 
 struct idtEntry {
     uint16_t base_lo;    // Lower 16 bits of handler address
-    uint16_t sel;        // Kernel segment selector (usually 0x08)
+    uint16_t sel;        // Kernel segment selector
     uint8_t  always0;    // This must always be zero
     uint8_t  flags;      // Flags (0x8E for interrupt gate)
     uint16_t base_hi;    // Upper 16 bits of handler address

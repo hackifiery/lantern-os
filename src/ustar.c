@@ -103,7 +103,6 @@ static int memcmp(const void *a, const void *b, unsigned int n) {
 }
 
 int tarValid(struct TarHeader *th) {
-    //fmtWrite("checking header: %s\n", th->ustar);
     if (memcmp(th->ustar, "ustar", 5) == 0) return 1;
     else return 0;
 }
@@ -112,7 +111,8 @@ int tarValid(struct TarHeader *th) {
 struct TarHeader *tarNext(struct TarHeader *th) {
     int size = oct2bin((uint8_t *)th->size, 11);
     int blocks = ceilDiv(size, 512) + 1; // # of sectors to advance to the next file
-    return (struct TarHeader*)((uint8_t *)th + (blocks * 512));
+    struct TarHeader* new = (struct TarHeader*)((uint8_t *)th + (blocks * 512));
+    return new;
 }
 
 
@@ -145,12 +145,21 @@ int tarRead(uint8_t *buf, char *fname, char **dataPtr) {
 
 void tarList(const char* flag) {
     struct TarHeader *curr = (struct TarHeader *)tarBuf;
-    //fmtWrite("Directory listing of /\n");
     if (strcmp(flag, "-l") == 0) {
-        fmtWrite("type  size         lastModify          name\n");
-        fmtWrite("===== ========= ================== ==================");
+        fmtWrite("Directory listing of /\n");
+        fmtWrite("type  size      lastModify             name\n");
+        fmtWrite("===== ========= ====================== ==================");
     }
     while (tarValid(curr)){
+        // check for a file in a dir (don't list that if we're in the parent dir)
+        unsigned int isSubfile = 0;
+        for (int i = 0; i < strlen(curr->name)-1; i++) {
+            if (curr->name[i] == '/') {
+                isSubfile = 1;
+                break;
+            }
+        }
+        if (isSubfile) goto next;
         if (strcmp(flag, "-l") == 0) {
             fmtWrite("\n");
             switch (curr->type) {
@@ -159,16 +168,17 @@ void tarList(const char* flag) {
                 default:       fmtWrite("????"); break;
             }
             {unsigned long unixDate = oct2bin(curr->lastModTime, 11); struct Datetime dt; unix2date(unixDate, &dt);
-            fmtWrite("   %8d %02d-%02d-%04d@%02d:%02d:%02d %s", oct2bin(curr->size, 11), dt.month, dt.day, dt.year, dt.hour, dt.minute, dt.second, curr->name);
+            fmtWrite("   %8d %02d-%02d-%04d at %02d:%02d:%02d %s", oct2bin(curr->size, 11), dt.month, dt.day, dt.year, dt.hour, dt.minute, dt.second, curr->name);
             }
         }
         else {
             switch (curr->type) {
-                case TAR_FILE: fmtWrite("%s  ", curr->name); break;
-                case TAR_DIR:  fmtWrite("%s/  ", curr->name); break;
+                case TAR_FILE:
+                case TAR_DIR:  fmtWrite("%s  ", curr->name); break;
                 default:       fmtWrite("%s  ", curr->name); break;
             }
         }
+        next:
         curr = tarNext(curr);
     }
 }
@@ -198,13 +208,13 @@ int tarRm(const char *fname) {
     if (!tarReadFile(fname, &tmp)) return 0;}
 
     struct TarHeader *toDel = tarFind(tarBuf, fname);
-    int fSize    = oct2bin((uint8_t *)toDel->size, 11);
-    int delBytes = (ceilDiv(fSize, 512) + 1) * 512;
+    const int fSize    = oct2bin((uint8_t *)toDel->size, 11);
+    const int delBytes = (ceilDiv(fSize, 512) + 1) * 512;
 
     uint8_t *buf      = tarBuf;
     uint8_t *start    = (uint8_t *)toDel;
-    int      bufBytes = TAR_BUF_SIZE;
-    int      startIdx = start - buf;
+    const int      bufBytes = TAR_BUF_SIZE;
+    const int      startIdx = start - buf;
 
     for (int i = startIdx; i < bufBytes - delBytes; i++)
         buf[i] = buf[i + delBytes];

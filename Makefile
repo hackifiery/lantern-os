@@ -28,21 +28,24 @@ $(IMG): src $(BOOT_BIN) $(KERNEL_BIN)
 	dd if=$(BOOT_BIN) of=$(IMG) bs=512 seek=0 count=1 conv=notrunc
 	dd if=$(KERNEL_BIN) of=$(IMG) bs=512 seek=1 count=100 conv=notrunc
 	
-	echo "hello world" > hello.txt
+	echo "hello" > hello.txt
+	mkdir folder
+	echo "hi" > folder/hi.txt
 	if [ "$(APPS)" = "1" ]; then \
 		$(MAKE) -C src/apps all; \
-		tar -cf archive.tar hello.txt calc hello; \
+		tar --format=ustar -cf archive.tar hello.txt calc hello folder; \
 	else \
-		tar -cf archive.tar hello.txt; \
+		tar --format=ustar -cf archive.tar hello.txt folder; \
 	fi
 	
-	dd if=archive.tar of=$(IMG) seek=101 bs=512 count=100 conv=notrunc
-	rm -f hello.txt archive.tar
+	dd if=archive.tar of=$(IMG) seek=101 bs=512 count=128 conv=notrunc
+	rm -rf hello.txt folder #archive.tar
 
 run: $(IMG)
-	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=ide -m 64
+	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=ide -m 512
 
 clean:
 	$(MAKE) -C src clean
 	$(MAKE) -C src/apps clean
 	rm -f $(IMG) $(BOOT_BIN)
+	rm -rf hello.txt archive.tar folder

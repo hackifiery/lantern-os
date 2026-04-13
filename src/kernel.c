@@ -17,6 +17,7 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
     fmtWrite("\n");
     moveCursor(0,0);
     clearScreen();
+    
     fmtWrite("LanternOS v%s, copyright (c) 2026 hackifiery. All rights reserved.\n\n", VER);
     #define init(f, name) \
         fmtWrite("Initializing %s...", name); \
@@ -34,6 +35,15 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
     api.sfmtWrite = sfmtWrite;
     api.strcmp    = strcmp;
     api.atoi      = atoi;
+
+    /*fmtWrite("memory map:\n");
+    for (unsigned int i = 0; i < entryCount; i++) {
+        fmtWrite("  base=%x (%dk) len=%dk type=%d\n",
+            (unsigned long int)entries[i].base,
+            (unsigned long int)entries[i].base/1024,
+            (unsigned int)entries[i].length/1024,
+            entries[i].type);
+    }*/
 
     enableCursor(14, 15);
     struct MemoryInfo mem;

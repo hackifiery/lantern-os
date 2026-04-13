@@ -3,7 +3,7 @@
 
 #include "kstdint.h"
 
-#define TAR_MAX_SECTORS 64  // 32 kb
+#define TAR_MAX_SECTORS 128  // 64 kb
 #define TAR_BUF_SIZE (TAR_MAX_SECTORS * 512)
 
 #define TAR_FILE   '0'
@@ -27,7 +27,7 @@ struct TarHeader {
     char type;
     char linkedFileName[100];
     char ustar[6]; // should be "ustar\0"
-    char ustarVer[2]; // should be "00"
+    char ustarVer[2]; // should be "00" (?)
     char ownerName[32];
     char ownerGroup[32];
     char majNum[8];

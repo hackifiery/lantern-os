@@ -32,7 +32,9 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
     uint16_t dskBuf[256];
 
     for(;;) {
-        fmtWrite("sh > ");
+        /*fmtGet("%s", NULL);
+        continue;*/
+        fmtWrite("/$ "); // TODO: change after dir support
         fmtGet("%s", input);
 
         int tokenCount = tokenize(input, tokens, 16);
@@ -56,8 +58,10 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
                 tarFlush();
                 blocking = 1;
             }
-            for(int i = 1; i < tokenCount; i++) {
-                fmtWrite("%s ", tokens[i]);
+            else {
+                for(int i = 1; i < tokenCount; i++) {
+                    fmtWrite("%s ", tokens[i]);
+                }
             }
         }
         cmd("clear") {
