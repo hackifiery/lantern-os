@@ -21,3 +21,8 @@ make run
 ```
 ### Windows
 If you're on windows, you have 2 options: use WSL and build for linux, or use some minGW toolchain (only cygwin has been tested). The instructions and prerequisites are the same as linux.
+## TODO
+- Better `ls` (for now)
+- Memory allocator/manager
+- `sbrk`, `brk`, etc.
+- Port a C std library eventually

@@ -1,7 +1,7 @@
 #ifndef LANTERN_VER_H
 #define LANTERN_VER_H
 
-#define VER "0.0.1"
+#define VER "0.0.2-pre"
 
 #ifndef __BUILD_DATE__
 #define __BUILD_DATE__ "unknown"
