@@ -54,7 +54,7 @@ userPanic:
     ;pushfd               ; eflags
     ;push dword 0x08      ; cs
     ;push dword .halt     ; dummy
-    ;push dword 0xBADBEEF ; don't mind me...
+    ;push dword 0xerrorcode
     ;push dword 34        ; int
     ;jmp isr_common_stub
     int 34

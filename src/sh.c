@@ -1,4 +1,5 @@
 #define KERN
+#define EXEC_ADDR 0x200000
 #include "io.h"
 #include "kstdint.h"
 #include "sys.h"
@@ -7,6 +8,8 @@
 #include "version.h"
 #include "api.h"
 #include "string_utils.h"
+
+#define MAX_TOKENS 16
 
 static int tokenize(char* str, char** tokens, int max_tokens) {
     int count = 0;
@@ -28,8 +31,10 @@ static int tokenize(char* str, char** tokens, int max_tokens) {
 
 void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
     char input[256];
-    char* tokens[16];
+    char* tokens[MAX_TOKENS];
     uint16_t dskBuf[256];
+
+    int bits = supports64bit();
 
     for(;;) {
         /*fmtGet("%s", NULL);
@@ -76,6 +81,7 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
         cmd("uname") {
             fmtWrite("lanternOS i386 v%s (built %s on %s)\n", VER, __BUILD_DATE__, __BUILD_ARCH__);
         }
+        cmd("arch") fmtWrite("x86%s\n", bits ? "_64": "");
         cmd("free") {
             unsigned int total = getTotalMem(mbPtr);
             unsigned int used = getUsedMem();
@@ -136,23 +142,25 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
         else {
             char *data = 0;
             int size = tarReadFile(tokens[0], &data);
+            // fmtWrite("size is %d", size);
             if (size == 0) { fmtWrite("not found: %s\n", tokens[0]); continue; }
             // copy to 0x200000
-            uint8_t *dest = (uint8_t *)0x200000;
+            uint8_t *dest = (uint8_t *)EXEC_ADDR;
             for (int i = 0; i < size; i++) dest[i] = ((uint8_t *)data)[i];
             // jump to it
             /*DEBUG: fmtWrite("api addr: %x\n", (unsigned int)&api);
             fmtWrite("api.fmtWrite: %x\n", (unsigned int)api.fmtWrite);
-            fmtWrite("jumping to: %x\n", (unsigned int)0x200000);
+            fmtWrite("jumping to: %x\n", (unsigned int)EXEC_ADDR);
             fmtWrite("calc bytes: %02x %02x %02x %02x\n",
                     dest[0], dest[1], dest[2], dest[3]);*/
             typedef void (*Program)(struct KernelAPI *);
-            Program prog = (Program)0x200000;
+            Program prog = (Program)EXEC_ADDR;
             prog(api);
             //fmtWrite("Unknown command: %s", tokens[0]);
         }
 
         //fmtWrite("\n");
         #undef cmd
+        for (int i = 0; i < MAX_TOKENS; i++) tokens[i] = 0;
     }
 }

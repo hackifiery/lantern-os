@@ -103,7 +103,12 @@ static int memcmp(const void *a, const void *b, unsigned int n) {
 }
 
 int tarValid(struct TarHeader *th) {
-    if (memcmp(th->ustar, "ustar", 5) == 0) return 1;
+    if (memcmp(th->ustar, "ustar", 5) == 0) {
+        #ifdef NO_DIR
+        if (th->type == TAR_DIR) return 0;
+        #endif
+        return 1;
+    }
     else return 0;
 }
 

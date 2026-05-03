@@ -39,10 +39,10 @@ $(IMG): src $(BOOT_BIN) $(KERNEL_BIN)
 	fi
 	
 	dd if=archive.tar of=$(IMG) seek=101 bs=512 count=128 conv=notrunc
-	rm -rf hello.txt folder #archive.tar
+	rm -rf hello.txt folder archive.tar
 
 run: $(IMG)
-	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=ide -m 512
+	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=ide -m 512 -display curses
 
 clean:
 	$(MAKE) -C src clean

@@ -14,6 +14,18 @@ unsigned int getUsedMem(void) {
     return used;
 }
 
+int supports64bit(void) {
+    uint32_t eax, edx;
+
+    __asm__ __volatile__ ("cpuid" : "=a"(eax) : "a"(0x80000000) : "ebx", "ecx", "edx");
+    if (eax < 0x80000001) {
+        return 0; // ext functions not supported
+    }
+
+    __asm__ __volatile__ ("cpuid" : "=a"(eax), "=d"(edx) : "a"(0x80000001) : "ebx", "ecx");
+    return (edx & (1 << 29)) != 0;
+}
+
 unsigned int getTotalMem(struct MemoryInfo* mem) {
     unsigned long long total = 0;
     // fmtWrite("\nmem entry_count is %d\n", mem->entry_count);
@@ -26,7 +38,7 @@ unsigned int getTotalMem(struct MemoryInfo* mem) {
         }
     }
     // fmtWrite("\n");
-    /*nsigned char* raw = (uint8_t*)0x7004;
+    /*unsigned char* raw = (uint8_t*)0x7004;
     for(int i = 0; i < 24; i++) {
         fmtWrite("%d ", raw[i]);
     }*/

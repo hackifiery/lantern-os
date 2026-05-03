@@ -20,5 +20,5 @@ DATE     := $(shell date)
 ARCH     := $(shell gcc -dumpmachine)
 ASFLAGS  := -f elf32
 CFLAGS   := -m32 -ffreestanding -fno-stack-protector -nostdlib -fno-pic -fno-leading-underscore -std=c99 \
-            -I$(shell pwd)/../include -D__BUILD_DATE__="\"$(DATE)\"" -D__BUILD_ARCH__="\"$(ARCH)\""
+            -I$(shell pwd)/../include -D__BUILD_DATE__="\"$(DATE)\"" -D__BUILD_ARCH__="\"$(ARCH)\"" -DNO_DIR
 #APPS     := calc

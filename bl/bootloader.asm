@@ -181,7 +181,7 @@ main:
 
     push MMAP + 4      ; arg 2 (e820 entries)
     movzx eax, word [MMAP] ; get the 16-bit count and zero-extend it to 32-bit
-    push eax           ;a arg 1 (entryCount)
+    push eax           ; arg 1 (entryCount)
     ; DEBUG: hlt
     call KERNEL           ; i hope...
 

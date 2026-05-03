@@ -32,6 +32,7 @@ struct MemoryInfo {
     struct E820Entry* entries;
 };
 
+int supports64bit(void);
 // note: in kb
 unsigned int getUsedMem(void);
 // note: in kb
