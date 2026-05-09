@@ -1,7 +1,7 @@
 #ifndef LANTERN_TAR_H
 #define LANTERN_TAR_H
 
-#include "kstdint.h"
+#include <stdint.h>
 
 #define TAR_MAX_SECTORS 128  // 64 kb
 #define TAR_BUF_SIZE (TAR_MAX_SECTORS * 512)
@@ -36,16 +36,18 @@ struct TarHeader {
     char _[12]; // padding
 };
 
-int tarRead(uint8_t *buf, char *fname, char **dataPtr);
+int tarRead(const char *fname, char **dataPtr);
 int tarReadFile(const char *fname, char **out);
 void tarPrintFile(const char *fname);
 void tarList(const char* flag);
 void tarLoad(void);
 struct TarHeader *tarNext(struct TarHeader *th);
+struct TarHeader *tarFind(const char *fname);
 int tarValid(struct TarHeader *th);
 void tarFlush(void);
 int tarRm(const char *fname);
 int tarTouch(const char *fname);
 int tarEdit(const char *fname, const char *data, unsigned int size);
+int tarGetSize(const char *fname);
 
 #endif // LANTERN_TAR_H

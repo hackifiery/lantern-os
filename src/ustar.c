@@ -1,8 +1,8 @@
 #include "ustar.h"
 #include "ata.h"
-#include "string_utils.h"
+#include <string.h>
 #include "io.h"
-#include "kstdint.h"
+#include <stdint.h>
 
 #define TAR_START_LBA 101
 #define ceilDiv(x, y) (x / y + (x % y != 0))
@@ -93,14 +93,14 @@ void bin2oct_padded(unsigned int num, char* str, int width) {
     }
 }
 
-static int memcmp(const void *a, const void *b, unsigned int n) {
+/*static int memcmp(const void *a, const void *b, size_t n) {
     const uint8_t *pa = (const uint8_t *)a;
     const uint8_t *pb = (const uint8_t *)b;
     for (unsigned int i = 0; i < n; i++) {
         if (pa[i] != pb[i]) return pa[i] - pb[i];
     }
     return 0;
-}
+}*/
 
 int tarValid(struct TarHeader *th) {
     if (memcmp(th->ustar, "ustar", 5) == 0) {
@@ -131,8 +131,8 @@ static struct TarHeader *tarGetEnd(uint8_t *buf) {
     return curr;
 }
 
-static struct TarHeader *tarFind(uint8_t *buf, const char *fname) {
-    struct TarHeader *curr = (struct TarHeader*) buf;
+struct TarHeader *tarFind(const char *fname) {
+    struct TarHeader *curr = (struct TarHeader*) tarBuf;
     while (tarValid(curr)) {
         if (strcmp(curr->name, fname) == 0) return curr;
         curr = tarNext(curr);
@@ -141,8 +141,8 @@ static struct TarHeader *tarFind(uint8_t *buf, const char *fname) {
 }
 
 // returns file size
-int tarRead(uint8_t *buf, char *fname, char **dataPtr) {
-    struct TarHeader *th = tarFind(buf, fname);
+int tarRead(const char *fname, char **dataPtr) {
+    struct TarHeader *th = tarFind(fname);
     if (!th) return 0;
     *dataPtr = (char*)th + 512;
     return oct2bin(th->size, 11);
@@ -190,7 +190,7 @@ void tarList(const char* flag) {
 
 void tarPrintFile(const char *fname) {
     char *data;
-    const unsigned int size = tarRead(tarBuf, fname, &data);
+    const unsigned int size = tarRead(fname, &data);
     if (!size) {fmtWrite("%s not found\n", fname); return;}
     for (int i = 0; i < size; i++) fmtWrite("%c", data[i]); // safer than directly printing data
 }
@@ -205,14 +205,14 @@ void tarFlush(void) {
 }
 
 int tarReadFile(const char *fname, char **out) {
-    return tarRead(tarBuf, (char *)fname, out);
+    return tarRead((char *)fname, out);
 }
 
 int tarRm(const char *fname) {
     {char *tmp;
     if (!tarReadFile(fname, &tmp)) return 0;}
 
-    struct TarHeader *toDel = tarFind(tarBuf, fname);
+    struct TarHeader *toDel = tarFind(fname);
     const int fSize    = oct2bin((uint8_t *)toDel->size, 11);
     const int delBytes = (ceilDiv(fSize, 512) + 1) * 512;
 
@@ -253,13 +253,19 @@ int tarTouch(const char *fname) {
 }
 
 int tarEdit(const char *fname, const char *data, unsigned int size) {
-    struct TarHeader *th = tarFind(tarBuf, fname);
+    struct TarHeader *th = tarFind(fname);
     if (!th) return 1;
     tarRm(fname);
     if (tarTouch(fname)) return 1;
-    th = tarFind(tarBuf, fname); // get the new header after appending
+    th = tarFind(fname); // get the new header after appending
     bin2oct_padded(size, th->size, 11);
     char *dataPtr = (char *)th + 512;
     for (int i = 0; i < size; i++) dataPtr[i] = data[i];
     return 0;
+}
+
+int tarGetSize(const char *fname) {
+    struct TarHeader *th = tarFind(fname);
+    if (!th) return 0;
+    return oct2bin((uint8_t *)th->size, 11);
 }

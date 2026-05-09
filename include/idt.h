@@ -1,7 +1,7 @@
 #ifndef LANTERN_IDT_H
 #define LANTERN_IDT_H
 
-#include "kstdint.h"
+#include <stdint.h>
 #include "sys.h"
 
 struct idtEntry {

@@ -1,6 +1,6 @@
 #include "sys.h"
 #include "io.h"
-#include "kstdint.h"
+#include <stdint.h>
 //#include <stdint.h>
 
 extern unsigned int _kernelStart;

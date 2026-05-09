@@ -1,7 +1,7 @@
 #ifndef LANTERN_SYS_H
 #define LANTERN_SYS_H
 
-#include "kstdint.h"
+#include <stdint.h>
 
 /*struct multibootInfo {
     unsigned int flags;

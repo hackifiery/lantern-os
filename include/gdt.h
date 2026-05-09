@@ -1,6 +1,6 @@
 #ifndef LANTERN_GDT_H
 #define LANTERN_GDT_H
-#include "kstdint.h"
+#include <stdint.h>
 
 struct GdtEntry {
     uint16_t limitLow;

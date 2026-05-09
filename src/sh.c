@@ -1,13 +1,13 @@
 #define KERN
 #define EXEC_ADDR 0x200000
 #include "io.h"
-#include "kstdint.h"
+#include <stdint.h>
 #include "sys.h"
 #include "idt.h"
 #include "ustar.h"
 #include "version.h"
 #include "api.h"
-#include "string_utils.h"
+#include <string.h>
 
 #define MAX_TOKENS 16
 

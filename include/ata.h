@@ -1,6 +1,6 @@
 #ifndef ATA_H
 #define ATA_H
-#include "kstdint.h"
+#include <stdint.h>
 
 #define ATA_PRIM_OFFSET 0x1F0
 #define ATA_DATA        (ATA_PRIM_OFFSET)

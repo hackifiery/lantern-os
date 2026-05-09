@@ -1,5 +1,5 @@
 #include "io.h"
-#include "kstdint.h"
+#include <stdint.h>
 #include "ata.h"
 #include "sys.h"
 

@@ -1,6 +1,6 @@
 #ifndef LANTERN_IO_H
 #define LANTERN_IO_H
-#include "kstdint.h"
+#include <stdint.h>
 
 enum VGAColor {
     BLACK = 0, BLUE = 1, GREEN = 2, CYAN = 3,

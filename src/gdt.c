@@ -1,5 +1,5 @@
 #include "gdt.h"
-#include "kstdint.h"
+#include <stdint.h>
 
 // 3 entries: Null, Code, and Data
 struct GdtEntry gdt[3];

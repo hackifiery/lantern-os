@@ -1,5 +1,5 @@
 #include "io.h"
-#include "kstdint.h"
+#include <stdint.h>
 #include "serial.h"
 
 #define SERIAL 1
