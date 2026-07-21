@@ -12,6 +12,7 @@ struct HeapState {
     uintptr_t end; // DO NOT MODIFY AFTER INIT!!!!
 };
 
-void memInit(void* start, const size_t size);
+void* kbrk(int increment);
+void* sbrk(int increment); // from syscalls.c
 
 #endif // LANTERN_MEM_H

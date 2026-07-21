@@ -15,10 +15,15 @@
 #include "mem.h"
 #include "sh.h"
 
+#ifndef __PICOLIBC_VERSION__
+#error "Kernel must be built with picolibc"
+#endif
+#include <picolibc.h>
 #define HEAP_START 0x00100000
 #define HEAP_SIZE  (1024 * 1024) // 1mb
+#define STOP for(;;);
 
-void* sbrk(int increment);
+//void* sbrk(int increment);
 
 struct KernelAPI api;
 
@@ -26,15 +31,16 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
     /*volatile unsigned short *vga = (volatile unsigned short *)0xB8000;
     vga[0] = 0x0F41;
     goto DEBUG;*/
-    fmtWrite("\n");
+    printf("\n");
     moveCursor(0,0);
     clearScreen();
     
-    fmtWrite("LanternOS v%s, copyright (c) 2026 hackifiery. All rights reserved.\n\n", VER);
+    printf("LanternOS v%s, copyright (c) 2026 hackifiery. All rights reserved.\n", VER);
+    printf("Built with picolibc %s\n\n", __PICOLIBC_VERSION__);
     #define init(f, name) \
-        fmtWrite("Initializing %s...", name); \
+        printf("Initializing %s...", name); \
         f; \
-        fmtWrite("ok\n")
+        printf("ok\n")
     init(initIdt(), "IDT");
     init(initGdt(), "GDT");
     init(__asm__ volatile("sti"), "interrupts");
@@ -48,9 +54,9 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
     api.strcmp    = strcmp;
     api.atoi      = atoi;
 
-    /*fmtWrite("memory map:\n");
+    /*printf("memory map:\n");
     for (unsigned int i = 0; i < entryCount; i++) {
-        fmtWrite("  base=%x (%dk) len=%dk type=%d\n",
+        printf("  base=%x (%dk) len=%dk type=%d\n",
             (unsigned long int)entries[i].base,
             (unsigned long int)entries[i].base/1024,
             (unsigned int)entries[i].length/1024,
@@ -61,33 +67,38 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
     struct MemoryInfo mem;
     mem.entry_count = entryCount;
     mem.entries = entries;
-    init(memInit((void*)HEAP_START, HEAP_SIZE), "memory manager");
+    //init(memInit((void*)HEAP_START, HEAP_SIZE), "memory manager");
 
-    fmtWrite("\nWelcome to the lanternOS shell\nReport bugs at https://github.com/hackifiery/lantern-os.\n");
-    fmtWrite("Type 'help' for commands.\n\n");
+    printf("\nWelcome to the lanternOS shell\nReport bugs at https://github.com/hackifiery/lantern-os.\n");
+    printf("Type 'help' for commands.\n\n");
     #undef init
-    goto DEBUG;
+    //goto DEBUG;
     for (;;) sh(&mem, &api);
     return;
 
-    DEBUG: for (int i = 0; i < entryCount; i++) {
-        fmtWrite("Memory Entry %d: base=%x (%dk) len=%dk type=%d\n",
+    DEBUG: 
+    for (int i = 0; i < entryCount; i++) {
+        printf("Memory Entry %d: base=%x (%dk) len=%dk type=%d\n",
             i,
             (unsigned long int)entries[i].base,
             (unsigned long int)entries[i].base/1024,
             (unsigned int)entries[i].length/1024,
             entries[i].type);
     }
-    fmtWrite("strlen test: %d\n", strlen("hello"));  // should print 5
-    fmtWrite("strcmp test: %d\n", strcmp("abc", "abc"));  // should print 0
+    printf("strlen test: %d\n", strlen("hello"));  // should print 5
+    printf("strcmp test: %d\n", strcmp("abc", "abc"));  // should print 0
     void *p = malloc(64);
-    if (p) fmtWrite("malloc ok: %x\n", (unsigned int)p);
-    else   fmtWrite("malloc failed\n");fmtWrite("testing sbrk\n");
+    if (p) printf("malloc ok: %x\n", (unsigned int)p);
+    else   printf("malloc failed\n");printf("testing sbrk\n");
     void *sb = sbrk(256);
-    fmtWrite("sbrk returned: %x\n", (unsigned int)sb);
-    fmtWrite("testing printf\n");
+    printf("sbrk returned: %x\n", (unsigned int)sb);
+    printf("testing sprintf\n");
     //for(;;);
+    char tmp[100];
     printf("printf works: %d\n", 42);
+    int c = getchar();
+    printf("You typed: %c\n", c);
+    STOP
 }
 
 /* DEBUG
@@ -105,7 +116,7 @@ void kmain() {
     initIdt();
     vga[3] = 0x1f44; // White 'D'
 
-    fmtWrite("hi");
+    printf("hi");
 
     while(1) { __asm__ ("hlt"); }
 }

@@ -1,9 +1,9 @@
 # LanternOS
-LanternOS is a hobbyist OS and kernel made by me to explore how OS's work. It currently has an IDT, a basic GDT, IRQ and ISRs, a basic keyboard and VGA text-mode driver, and an ATA and USTAR fs driver. It also uses a custom bootloader called Lightbulb. It runs on 32-bit x86, and although it boots on x86_64, 64-bit hasn't been thoroughly tested yet and the binaries are still 32-bit.
+LanternOS is a hobbyist OS and kernel made by me to explore how OS's work. It currently has an IDT, a basic GDT, IRQ and ISRs, a basic keyboard and VGA text-mode driver, and an ATA and USTAR fs driver. It also uses a custom bootloader called Lightbulb. It runs on 32-bit x86, and although it boots on x86_64, 64-bit hasn't been thoroughly tested yet and the binaries are still 32-bit. Picolibc has been ported, although very unstable.
 
 ## Building
 ### Prereqs
-- An `i686-elf` cross toolchain (prefferably, native toolchains can also be used, i think...)
+- An `i686-elf` cross toolchain with picolibc (prefferably, native toolchains can also be used, i think...)
     - `gcc` w/c99+ support
     - `ld`
     - `objcopy`
@@ -20,9 +20,11 @@ To run the image in qemu, run
 make run
 ```
 ### Windows
-If you're on windows, you have 2 options: use WSL and build for linux, or use some minGW toolchain (only cygwin has been tested). The instructions and prerequisites are the same as linux.
+Not supported :sob:
+## Goals for v0.0.2
+- Migrate from newlib to picolibc
+- Decent picolibc support (such as basic i/o functions, math/string parsing functions, etc.)
+- POSIX-like read/write interface
 ## TODO
-- Better `ls` (for now)
-- Memory allocator/manager
-- `sbrk`, `brk`, etc.
-- Port a C std library eventually
+- Add native apps
+- GUI (maybe?)

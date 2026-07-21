@@ -28,28 +28,4 @@ struct KernelAPI {
 
     struct MemoryInfo *memInfo;  // pointer to kernel's mem info
 };
-
-
-#ifndef KERN
-volatile unsigned int *sysTicks;
-#define fmtWrite      k->fmtWrite
-#define fmtGet        k->fmtGet
-#define sfmtWrite     k->sfmtWrite
-#define clearScreen   k->clearScreen
-#define strcmp        k->strcmp
-#define atoi          k->atoi
-#define reboot        k->reboot
-#define shutdown      k->shutdown
-#define userPanic     k->userPanic
-#define sendInterrupt k->sendInterrupt
-#define sysTicks      (*k->sysTicks)
-#define getTotalMem   k->getTotalMem
-#define getUsedMem    k->getUsedMem
-#define memInfo       k->memInfo
-#define tarLoad       k->tarLoad
-#define tarList       k->tarList
-#define tarPrintFile  k->tarPrintFile
-#define tarReadFile   k->tarReadFile
-#endif
-
 #endif

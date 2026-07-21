@@ -18,7 +18,8 @@ src:
 	$(MAKE) -C src all
 
 apps:
-	$(MAKE) -C src/apps all
+	#$(MAKE) -C src/apps all
+	echo
 
 $(BOOT_BIN): $(BOOT_SRC)
 	nasm -f bin $(BOOT_SRC) -o $(BOOT_BIN)
@@ -30,22 +31,17 @@ $(IMG): src $(BOOT_BIN) $(KERNEL_BIN)
 	
 	echo "hello" > hello.txt
 	mkdir folder
-	echo "hi" > folder/hi.txt
-	if [ "$(APPS)" = "1" ]; then \
-		$(MAKE) -C src/apps all; \
-		tar --format=ustar -cf archive.tar hello.txt calc hello folder; \
-	else \
-		tar --format=ustar -cf archive.tar hello.txt folder; \
-	fi
-	
+	tar -cf archive.tar hello.txt folder
 	dd if=archive.tar of=$(IMG) seek=101 bs=512 count=128 conv=notrunc
 	rm -rf hello.txt folder archive.tar
 
 run: $(IMG)
 	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=ide -m 512 -display curses
+debug: $(IMG)
+	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=ide -m 512 -s -S -display curses
 
 clean:
 	$(MAKE) -C src clean
-	$(MAKE) -C src/apps clean
+	#$(MAKE) -C src/apps clean
 	rm -f $(IMG) $(BOOT_BIN)
 	rm -rf hello.txt archive.tar folder

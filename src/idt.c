@@ -161,9 +161,14 @@ void fault(struct Registers *r) {
     fmtWrite("EDI: 0x%08x ESI: 0x%08x\nEBP: 0x%08x ESP: 0x%08x\n", r->edi, r->esi, r->ebp, r->esp);
 
     fmtWrite("\n\nSystem Halted.");
+
+    // in case fmtWrite fails
+    uint16_t *vga = (uint16_t*)0xB8000;
+    vga[1999] = 0x4F46;   // 'F' on red background, bottom right
     disableCursor();
     halt();
 }
+
 
 void interruptDispatcher(struct Registers *r) {
     if (r->int_no == 0xFF) {

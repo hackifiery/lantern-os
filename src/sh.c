@@ -8,6 +8,7 @@
 #include "version.h"
 #include "api.h"
 #include <string.h>
+#include <stdio.h>
 
 #define MAX_TOKENS 16
 
@@ -37,11 +38,12 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
     int bits = supports64bit();
 
     for(;;) {
-        /*fmtGet("%s", NULL);
+        /*scanf("%s", NULL);
         continue;*/
-        fmtWrite("/$ "); // TODO: change after dir support
-        fmtGet("%s", input);
-
+        printf("/$ "); // TODO: change after dir support
+        scanf("%[^\n]", input);
+        //printf("got: %s, len = %d\n", input, (int)strlen(input));
+        fflush(stdin); // clear stdin buffer
         int tokenCount = tokenize(input, tokens, 16);
         if (tokenCount == 0) continue;
         #define cmd(s) else if (strcmp(tokens[0], s) == 0)
@@ -49,14 +51,14 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
         if (strcmp(tokens[0], "") == 0) continue;
 
         cmd("help") {
-            fmtWrite("Available: help, echo, clear, ping, uptime, uname, free, cat, ls, panic, reboot, shutdown\n");
+            printf("Available: help, echo, clear, ping, uptime, uname, free, cat, ls, panic, reboot, shutdown\n");
         }
         cmd("echo") {
             if (strcmp(tokens[1], ">") == 0) {
                 tarLoad();
                 blocking = 0;
                 char buf[256];
-                fmtGet("%s", buf);
+                scanf("%s", buf);
                 buf[strlen(buf)] = '\n'; // echo adds newline
                 buf[strlen(buf)] = '\0';
                 tarEdit(tokens[2], buf, strlen(buf));
@@ -65,7 +67,7 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
             }
             else {
                 for(int i = 1; i < tokenCount; i++) {
-                    fmtWrite("%s ", tokens[i]);
+                    printf("%s ", tokens[i]);
                 }
             }
         }
@@ -73,25 +75,26 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
             clearScreen();
             continue;
         }
-        cmd("ping") fmtWrite("Pong!\n");
+        cmd("ping") printf("Pong!\n");
         cmd("uptime") {
             unsigned int seconds = sysTicks / 100;
-            fmtWrite("%d s\n", seconds);
+            printf("%d s\n", seconds);
         }
         cmd("uname") {
-            fmtWrite("lanternOS i386 v%s (built %s on %s)\n", VER, __BUILD_DATE__, __BUILD_ARCH__);
+            printf("lanternOS i386 v%s (built %s on %s)\n", VER, __BUILD_DATE__, __BUILD_ARCH__);
         }
-        cmd("arch") fmtWrite("x86%s\n", bits ? "_64": "");
+        cmd("arch") printf("x86%s\n", bits ? "_64": "");
         cmd("free") {
             unsigned int total = getTotalMem(mbPtr);
             unsigned int used = getUsedMem();
-            if (strcmp(tokens[1], "-m") == 0)      fmtWrite("total = %dm, used = %dm, free = %dm\n", total/1024, used/1024, (total - used)/1024);
-            else if (strcmp(tokens[1], "-g") == 0) fmtWrite("total = %dg, used = %dg, free = %dg\n", total/1024/1024, used/1024/1024, (total - used)/1024/1024);
-            else if (strcmp(tokens[1], "-b") == 0) fmtWrite("total = %db, used = %db, free = %db\n", total*1024, used*1024, (total - used)*1024);
-            else                                   fmtWrite("total = %dk, used = %dk, free = %dk\n", total, used, total - used);
+            if (strcmp(tokens[1], "-m") == 0)      printf("total = %dm, used = %dm, free = %dm\n", total/1024, used/1024, (total - used)/1024);
+            else if (strcmp(tokens[1], "-g") == 0) printf("total = %dg, used = %dg, free = %dg\n", total/1024/1024, used/1024/1024, (total - used)/1024/1024);
+            else if (strcmp(tokens[1], "-b") == 0) printf("total = %db, used = %db, free = %db\n", total*1024, used*1024, (total - used)*1024);
+            else                                   printf("total = %dk, used = %dk, free = %dk\n", total, used, total - used);
         }
+        
         cmd("panic") {
-            if (atoi(tokens[1]) > 21 || atoi(tokens[1]) == 34 || atoi(tokens[1]) == 9 || atoi(tokens[1]) == 15 || atoi(tokens[1]) == 18 || atoi(tokens[1]) == 20) fmtWrite("Unknown fault interrupt\n");
+            if (atoi(tokens[1]) > 21 || atoi(tokens[1]) == 34 || atoi(tokens[1]) == 9 || atoi(tokens[1]) == 15 || atoi(tokens[1]) == 18 || atoi(tokens[1]) == 20) printf("Unknown fault interrupt\n");
             if (tokenCount == 2) sendInterrupt(atoi(tokens[1]));
             else userPanic();
         }
@@ -100,15 +103,15 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
             //ataRead(0, buf);
             tarLoad();
             tarList(tokens[1]);
-            fmtWrite("\n");
+            printf("\n");
         }
         cmd("rm") {
             if (tarRm(tokens[1])) {
-                //fmtWrite("removed from buffer\n");
+                //printf("removed from buffer\n");
                 tarFlush();
-                //fmtWrite("flushed to disk\n");
+                //printf("flushed to disk\n");
                 //tarLoad();
-                //fmtWrite("reloaded, verifying...\n");
+                //printf("reloaded, verifying...\n");
                 //tarList(tokens[1]);
             }
         }
@@ -116,18 +119,18 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
             tarLoad();
             if (strcmp(tokens[1], ">") == 0) {
                 blocking = 0;
-                //fmtWrite("\n");
+                //printf("\n");
                 char buf[256];
-                fmtGet("%s", buf);
+                scanf("%s", buf);
                 tarEdit(tokens[2], buf, strlen(buf));
                 tarFlush();
                 blocking = 1;
             }
             else {
                 /*DEBUG: struct TarHeader *h = (struct TarHeader *)tarBuf;
-                fmtWrite("first 4 entries after load:\n");
+                printf("first 4 entries after load:\n");
                 for (int i = 0; i < 4 && tarValid(h); i++) {
-                    fmtWrite("  '%s'\n", h->name);
+                    printf("  '%s'\n", h->name);
                     h = tarNext(h);
                 }*/
                 tarPrintFile(tokens[1]);
@@ -142,24 +145,24 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
         else {
             char *data = 0;
             int size = tarReadFile(tokens[0], &data);
-            // fmtWrite("size is %d", size);
-            if (size == 0) { fmtWrite("not found: %s\n", tokens[0]); continue; }
+            // printf("size is %d", size);
+            if (size == 0) { printf("not found: %s\n", tokens[0]); continue; }
             // copy to 0x200000
             uint8_t *dest = (uint8_t *)EXEC_ADDR;
             for (int i = 0; i < size; i++) dest[i] = ((uint8_t *)data)[i];
             // jump to it
-            /*DEBUG: fmtWrite("api addr: %x\n", (unsigned int)&api);
-            fmtWrite("api.fmtWrite: %x\n", (unsigned int)api.fmtWrite);
-            fmtWrite("jumping to: %x\n", (unsigned int)EXEC_ADDR);
-            fmtWrite("calc bytes: %02x %02x %02x %02x\n",
+            /*DEBUG: printf("api addr: %x\n", (unsigned int)&api);
+            printf("api.printf: %x\n", (unsigned int)api.printf);
+            printf("jumping to: %x\n", (unsigned int)EXEC_ADDR);
+            printf("calc bytes: %02x %02x %02x %02x\n",
                     dest[0], dest[1], dest[2], dest[3]);*/
             typedef void (*Program)(struct KernelAPI *);
             Program prog = (Program)EXEC_ADDR;
             prog(api);
-            //fmtWrite("Unknown command: %s", tokens[0]);
+            //printf("Unknown command: %s", tokens[0]);
         }
 
-        //fmtWrite("\n");
+        //printf("\n");
         #undef cmd
         for (int i = 0; i < MAX_TOKENS; i++) tokens[i] = 0;
     }
