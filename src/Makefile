@@ -17,4 +17,4 @@ kern.elf: $(OBJS) linker.ld
 	$(ASM) $(ASFLAGS) $< -o $@
 
 clean:
-	rm -f $(OBJS) kern.elf kern.bin
+	rm -f $(OBJS) kern.elf kern.bin hello
