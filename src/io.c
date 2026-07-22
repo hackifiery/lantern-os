@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include "serial.h"
 
-#define SERIAL 1
 #define BUFFER_SIZE 256
 
 uint8_t COLOR = vgaColor(GREEN, BLACK);
@@ -219,7 +218,6 @@ void writeChar(char c) {
         cursorX = 0;
         cursorY++;
     }
-    if (SERIAL) writeSerial(c);
     if (cursorY >= VGA_H) scroll();
     moveCursor(cursorX, cursorY);
 }

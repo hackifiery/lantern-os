@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define TAR_MAX_SECTORS 128  // 64 kb
+#define TAR_MAX_SECTORS 1024  // 64 kb
 #define TAR_BUF_SIZE (TAR_MAX_SECTORS * 512)
 
 #define TAR_FILE   '0'

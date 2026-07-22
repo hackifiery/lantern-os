@@ -9,12 +9,47 @@
 #include <errno.h>
 #include <stdio.h>
 
+#define STDIN_BUF_LEN 256
+
 #ifndef S_IFCHR
 #define S_IFCHR 0020000
 #endif
 #undef errno
 //extern void writeChar(char c);
 //extern char getInput(void);
+
+static char stdinBuf[STDIN_BUF_LEN];
+static size_t stdinBufLen = 0;
+static size_t stdinBufPos = 0;
+static int stdinLineReady = 0; // whether the stdin buffer is ready to be read (newline has been received)
+
+static void readStdinLine(void) {
+    int pos = 0;
+    for (;;) {
+        char c;
+        while ((c = getInput()) == 0);
+        if (c == '\n' || c == '\r') {
+            stdinBuf[pos++] = '\n';
+            writeChar('\n'); // echo newline
+            break;
+        }
+        else if (c == '\b') {
+            if (pos > 0) {
+                pos--;
+                writeChar('\b');
+            }
+        }
+        else {
+            stdinBuf[pos] = c;
+            pos++;
+            writeChar(c);
+        }
+    }
+    stdinLineReady = 1;
+    stdinBufLen = pos; // excludes null term and newline
+    stdinBuf[pos] = '\0';
+    stdinBufPos = 0;
+}
 
 // put function for stdout/stderr
 static int __stdout_put(char c, struct __file *f) {
@@ -23,8 +58,8 @@ static int __stdout_put(char c, struct __file *f) {
     return 0;
 }
 
-// get function for stdin
-static int __stdin_get(struct __file *f) {
+// get function for stdin (now replaced with __read)
+/*static int __stdin_get(struct __file *f) {
     (void)f;
     char c;
     while ((c = getInput()) == 0) {
@@ -33,6 +68,16 @@ static int __stdin_get(struct __file *f) {
     writeChar(c);  // echo
     if (c != '\b') return (unsigned char)c;
     else return 0;  // don't return backspace to caller
+}*/
+int _read(int fd, void* buf, size_t count);
+static int __stdin_get(struct __file *f) {
+    (void)f;
+    unsigned char c;
+    if (_read(0, &c, 1) == 1) {
+        return (int)c;
+    } else {
+        return EOF;
+    }
 }
 /*static int __stdin_get(struct __file *f) {
     char c;
@@ -44,7 +89,7 @@ static int __stdin_get(struct __file *f) {
 
 // stdout FILE - write only, no buffering flags needed
 static FILE __stdout = {
-    .flags = __SWR,      /* write-only */
+    .flags = __SWR,// write only
     .put   = __stdout_put,
     .get   = NULL,
     .flush = NULL,
@@ -52,7 +97,7 @@ static FILE __stdout = {
 
 // stdin FILE - read only
 static FILE __stdin = {
-    .flags = __SRD,      /* read-only, unbuffered */
+    .flags = __SRD, // read-only
     .put   = NULL,
     .get   = __stdin_get,
     .flush = NULL,
@@ -82,6 +127,18 @@ int _close(int fd) {
 }
 
 int _read(int fd, void* buf, size_t count) {
+    if (fd == 0) {
+        if (!stdinLineReady) {
+            readStdinLine();
+        }
+        size_t copyCount = count;
+        size_t actualCount = stdinBufLen - stdinBufPos; // number of characters in the buffer we want to read
+        if (copyCount > actualCount) copyCount = actualCount; // prevents overflow
+        memcpy(buf, &stdinBuf[stdinBufPos], copyCount);
+        stdinBufPos += copyCount;
+        if (stdinBufPos >= stdinBufLen) stdinLineReady = 0; // stdin buffer done reading
+        return (int)copyCount;
+    }
     return read(fd, buf, count);
 }
 

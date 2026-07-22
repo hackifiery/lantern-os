@@ -51,8 +51,7 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
     api.fmtWrite  = fmtWrite;
     api.fmtGet    = fmtGet;
     api.sfmtWrite = sfmtWrite;
-    api.strcmp    = strcmp;
-    api.atoi      = atoi;
+    api.writeChar = writeChar;
 
     /*printf("memory map:\n");
     for (unsigned int i = 0; i < entryCount; i++) {

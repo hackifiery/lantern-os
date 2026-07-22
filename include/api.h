@@ -7,10 +7,8 @@ struct KernelAPI {
     void (*fmtWrite)(const char *fmt, ...);
     void (*fmtGet)(const char *fmt, ...);
     void (*sfmtWrite)(char *buf, const char *fmt, ...);
+    void (*writeChar)(char c);
     void (*clearScreen)(void);
-
-    int  (*strcmp)(const char *a, const char *b);
-    int  (*atoi)(const char *s);
 
     void (*reboot)(void);
     void (*shutdown)(void);

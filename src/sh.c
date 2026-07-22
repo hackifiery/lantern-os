@@ -7,6 +7,8 @@
 #include "ustar.h"
 #include "version.h"
 #include "api.h"
+#include "binary.h"
+#include "elf.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -143,23 +145,10 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
         cmd("reboot")   reboot();
         cmd("shutdown") shutdown();
         else {
-            char *data = 0;
-            int size = tarReadFile(tokens[0], &data);
-            // printf("size is %d", size);
-            if (size == 0) { printf("not found: %s\n", tokens[0]); continue; }
-            // copy to 0x200000
-            uint8_t *dest = (uint8_t *)EXEC_ADDR;
-            for (int i = 0; i < size; i++) dest[i] = ((uint8_t *)data)[i];
-            // jump to it
-            /*DEBUG: printf("api addr: %x\n", (unsigned int)&api);
-            printf("api.printf: %x\n", (unsigned int)api.printf);
-            printf("jumping to: %x\n", (unsigned int)EXEC_ADDR);
-            printf("calc bytes: %02x %02x %02x %02x\n",
-                    dest[0], dest[1], dest[2], dest[3]);*/
-            typedef void (*Program)(struct KernelAPI *);
-            Program prog = (Program)EXEC_ADDR;
-            prog(api);
-            //printf("Unknown command: %s", tokens[0]);
+            if (!tarFind(tokens[0])) printf("Not found\n");
+            else if (!loadBinary(tokens[0], *api)) {
+                printf("Corrupted binary\n");
+            }
         }
 
         //printf("\n");

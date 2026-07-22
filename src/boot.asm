@@ -34,7 +34,9 @@ _start:
 
 
 halt:
+    cli
     hlt
+    jmp halt
 
 section .bss
 align 16

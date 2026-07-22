@@ -18,8 +18,7 @@ src:
 	$(MAKE) -C src all
 
 apps:
-	#$(MAKE) -C src/apps all
-	echo
+	$(MAKE) -C apps all
 
 $(BOOT_BIN): $(BOOT_SRC)
 	nasm -f bin $(BOOT_SRC) -o $(BOOT_BIN)
@@ -28,20 +27,35 @@ $(IMG): src $(BOOT_BIN) $(KERNEL_BIN)
 	dd if=/dev/zero of=$(IMG) bs=1k count=4000
 	dd if=$(BOOT_BIN) of=$(IMG) bs=512 seek=0 count=1 conv=notrunc
 	dd if=$(KERNEL_BIN) of=$(IMG) bs=512 seek=1 count=100 conv=notrunc
-	
+
+	# Create test files
 	echo "hello" > hello.txt
-	mkdir folder
-	tar -cf archive.tar hello.txt folder
-	dd if=archive.tar of=$(IMG) seek=101 bs=512 count=128 conv=notrunc
-	rm -rf hello.txt folder archive.tar
+	mkdir -p folder
+	echo "hi" > folder/hi.txt
+
+	# Build apps and create TAR archive
+	if [ "$(APPS)" = "1" ]; then \
+		$(MAKE) -C apps all; \
+		mv apps/hello.elf hello; \
+		tar --format=ustar -cf archive.tar hello.txt hello; \
+	else \
+		tar --format=ustar -cf archive.tar hello.txt; \
+	fi
+
+	# Write TAR archive to disk image (starting at sector 101)
+	dd if=archive.tar of=$(IMG) seek=101 bs=512 conv=notrunc
+
+	# Clean up temporary files
+	rm -rf hello.txt folder #archive.tar
 
 run: $(IMG)
 	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=ide -m 512 -display curses
+
 debug: $(IMG)
 	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=ide -m 512 -s -S -display curses
 
 clean:
 	$(MAKE) -C src clean
-	#$(MAKE) -C src/apps clean
+	$(MAKE) -C apps clean
 	rm -f $(IMG) $(BOOT_BIN)
 	rm -rf hello.txt archive.tar folder
