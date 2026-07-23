@@ -46,13 +46,13 @@ $(IMG): src $(BOOT_BIN) $(KERNEL_BIN)
 	dd if=archive.tar of=$(IMG) seek=101 bs=512 conv=notrunc
 
 	# Clean up temporary files
-	rm -rf hello.txt folder #archive.tar
+	rm -rf hello.txt hello folder archive.tar
 
 run: $(IMG)
-	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=ide -m 512 #-display curses
+	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=ide -m 64 #-display curses
 
 debug: $(IMG)
-	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=ide -m 512 -s -S #-display curses
+	qemu-system-i386 -drive format=raw,file=$(IMG),index=0,if=ide -m 16 -s -S #-display curses
 
 clean:
 	$(MAKE) -C src clean

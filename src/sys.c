@@ -9,7 +9,7 @@ extern unsigned int _kernelEnd;
 unsigned int getUsedMem(void) {
     unsigned int start = (unsigned int)&_kernelStart;
     unsigned int end = (unsigned int)&_kernelEnd;
-    unsigned int used = (end - start) / 1024; // in KB
+    unsigned int used = (end - start);
 
     return used;
 }
@@ -42,7 +42,7 @@ unsigned int getTotalMem(struct MemoryInfo* mem) {
     for(int i = 0; i < 24; i++) {
         fmtWrite("%d ", raw[i]);
     }*/
-    return (unsigned int)(total / 1024);
+    return (unsigned)total;
 }
 
 void reboot(void) {

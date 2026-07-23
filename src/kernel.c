@@ -19,8 +19,8 @@
 #error "Kernel must be built with picolibc"
 #endif
 #include <picolibc.h>
-#define HEAP_START 0x00100000
-#define HEAP_SIZE  (1024 * 1024) // 1mb
+/*#define HEAP_START 0x00100000
+#define HEAP_SIZE  (1024 * 1024) // 1mb*/
 #define STOP for(;;);
 
 //void* sbrk(int increment);
@@ -72,18 +72,18 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
     printf("Type 'help' for commands.\n\n");
     #undef init
     //goto DEBUG;
-    for (;;) sh(&mem, &api);
-    return;
-
-    DEBUG: 
-    for (int i = 0; i < entryCount; i++) {
+    /*for (int i = 0; i < entryCount; i++) {
         printf("Memory Entry %d: base=%x (%dk) len=%dk type=%d\n",
             i,
             (unsigned long int)entries[i].base,
             (unsigned long int)entries[i].base/1024,
             (unsigned int)entries[i].length/1024,
             entries[i].type);
-    }
+    }*/
+    for (;;) sh(&mem, &api);
+    return;
+
+    DEBUG: 
     printf("strlen test: %d\n", strlen("hello"));  // should print 5
     printf("strcmp test: %d\n", strcmp("abc", "abc"));  // should print 0
     void *p = malloc(64);

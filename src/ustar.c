@@ -134,7 +134,9 @@ static struct TarHeader *tarGetEnd(uint8_t *buf) {
 struct TarHeader *tarFind(const char *fname) {
     struct TarHeader *curr = (struct TarHeader*) tarBuf;
     while (tarValid(curr)) {
+        //fmtWrite("testing %s (of len %d)...", curr->name, strlen(curr->name));
         if (strcmp(curr->name, fname) == 0) return curr;
+        //fmtWrite("no\n");
         curr = tarNext(curr);
     }
     return 0;
@@ -143,7 +145,7 @@ struct TarHeader *tarFind(const char *fname) {
 // returns file size
 int tarRead(const char *fname, char **dataPtr) {
     struct TarHeader *th = tarFind(fname);
-    if (!th) return 0;
+    if (!th) return -1;
     *dataPtr = (char*)th + 512;
     return oct2bin(th->size, 11);
 }
@@ -191,7 +193,7 @@ void tarList(const char* flag) {
 void tarPrintFile(const char *fname) {
     char *data;
     const unsigned int size = tarRead(fname, &data);
-    if (!size) {fmtWrite("%s not found\n", fname); return;}
+    if (size < 0) {fmtWrite("Not found\n", fname); return;}
     for (int i = 0; i < size; i++) fmtWrite("%c", data[i]); // safer than directly printing data
 }
 
@@ -200,7 +202,6 @@ void tarLoad(void) {
 }
 
 void tarFlush(void) {
-    //fmtWrite("after rm, first entry: %s\n", ((struct TarHeader*)tarBuf)->name);
     for (unsigned int i = 0; i < TAR_MAX_SECTORS; i++) ataWrite(TAR_START_LBA + i, (uint16_t *)(tarBuf + (i * 512)));
 }
 
@@ -210,7 +211,7 @@ int tarReadFile(const char *fname, char **out) {
 
 int tarRm(const char *fname) {
     {char *tmp;
-    if (!tarReadFile(fname, &tmp)) return 0;}
+    if (tarReadFile(fname, &tmp) < 0) return 0;}
 
     struct TarHeader *toDel = tarFind(fname);
     const int fSize    = oct2bin((uint8_t *)toDel->size, 11);
@@ -232,8 +233,8 @@ int tarRm(const char *fname) {
 
 int tarTouch(const char *fname) {
     char *dummy;
-    if (tarReadFile(fname, &dummy)) {
-        return 1;
+    if (tarReadFile(fname, &dummy) >= 0) {
+        return 0; // already exists
     }
     struct TarHeader *th = (struct TarHeader *)tarGetEnd(tarBuf);
     strcpy(th->name, fname);
@@ -249,7 +250,7 @@ int tarTouch(const char *fname) {
     strcpy(th->ownerGroup, "root");
     for (int i = 0; i < 8; i++) th->checksum[i] = ' ';
 
-    return 0;
+    return 1;
 }
 
 int tarEdit(const char *fname, const char *data, unsigned int size) {
@@ -261,7 +262,7 @@ int tarEdit(const char *fname, const char *data, unsigned int size) {
     bin2oct_padded(size, th->size, 11);
     char *dataPtr = (char *)th + 512;
     for (int i = 0; i < size; i++) dataPtr[i] = data[i];
-    return 0;
+    return 1;
 }
 
 int tarGetSize(const char *fname) {

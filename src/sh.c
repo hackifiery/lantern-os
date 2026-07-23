@@ -89,10 +89,12 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
         cmd("free") {
             unsigned int total = getTotalMem(mbPtr);
             unsigned int used = getUsedMem();
-            if (strcmp(tokens[1], "-m") == 0)      printf("total = %dm, used = %dm, free = %dm\n", total/1024, used/1024, (total - used)/1024);
-            else if (strcmp(tokens[1], "-g") == 0) printf("total = %dg, used = %dg, free = %dg\n", total/1024/1024, used/1024/1024, (total - used)/1024/1024);
-            else if (strcmp(tokens[1], "-b") == 0) printf("total = %db, used = %db, free = %db\n", total*1024, used*1024, (total - used)*1024);
-            else                                   printf("total = %dk, used = %dk, free = %dk\n", total, used, total - used);
+            //printf("DEBUG: total=%u KB, used=%u KB\n", total, used);
+            long diff = (long)total - used;
+            if (strcmp(tokens[1], "-m") == 0)      printf("total = %dm, used = %dm, free = %dm\n", total/1024/1024, used/1024/1024, (diff)/1024/1024);
+            else if (strcmp(tokens[1], "-g") == 0) printf("total = %dg, used = %dg, free = %dg\n", total/1024/1024/1024, used/1024/1024/1024, (diff)/1024/1024/1024);
+            else if (strcmp(tokens[1], "-b") == 0) printf("total = %db, used = %db, free = %db\n", total, used, (diff));
+            else                                   printf("total = %dk, used = %dk, free = %dk\n", total/1024, used/1024, (diff)/1024);
         }
         
         cmd("panic") {
@@ -109,13 +111,14 @@ void sh(struct MemoryInfo* mbPtr, struct KernelAPI *api) {
         }
         cmd("rm") {
             if (tarRm(tokens[1])) {
-                //printf("removed from buffer\n");
+                printf("removed from buffer\n");
                 tarFlush();
-                //printf("flushed to disk\n");
-                //tarLoad();
-                //printf("reloaded, verifying...\n");
-                //tarList(tokens[1]);
+                printf("flushed to disk\n");
+                tarLoad();
+                printf("reloaded, verifying...\n");
+                tarList(tokens[1]);
             }
+            else printf("Not found\n");
         }
         cmd("cat") {
             tarLoad();

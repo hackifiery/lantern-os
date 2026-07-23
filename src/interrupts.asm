@@ -49,6 +49,7 @@ ISR_NOERRCODE 19 ; simd fp exceptions
 ; virtualization not used
 ISR_ERRCODE   21 ; control protection exceptions
 ISR_NOERRCODE 34 ; user-thrown exception
+;ISR_NOERRCODE 35 ; oom
 
 userPanic:
     ;pushfd               ; eflags

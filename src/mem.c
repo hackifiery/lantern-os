@@ -1,4 +1,6 @@
 #include "mem.h"
+#include "io.h"
+#include "idt.h"
 #include <stdint.h>
 #include <stddef.h>
 

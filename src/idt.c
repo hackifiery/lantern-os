@@ -57,6 +57,7 @@ void initIdt(void) {
     // extern void isr20();
     extern void isr21();
     extern void isr34();
+    extern void isr35();
     
     setIdtGate(0, (unsigned int)isr0);
     setIdtGate(1, (unsigned int)isr1);
@@ -88,6 +89,7 @@ void initIdt(void) {
     setIdtGate(33, (unsigned int)irq1);
 
     setIdtGate(34, (unsigned int)isr34); // user-thrown exception
+    //setIdtGate(35, (unsigned int)isr35); // oom
 
     remapPic();
     loadIdt((unsigned int)&idtp);
@@ -147,7 +149,8 @@ void fault(struct Registers *r) {
         case 17: fmtWrite("Alignment Check (#AC)"); break;
         case 19: fmtWrite("SIMD Floating-Point Exception (#XM)"); break;
         case 21: fmtWrite("Control Protection Exception (#CP)"); break;
-        case 34: fmtWrite("User-thrown Exception (#UT)"); break;
+        case 34: fmtWrite("User-thrown Exception"); break;
+        //case 35: fmtWrite("Out of memory"); break;
         
         default:
             fmtWrite("Unknown Exception #%d", r->int_no);

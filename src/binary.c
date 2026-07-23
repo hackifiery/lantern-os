@@ -9,7 +9,7 @@
 int loadBinary(const char* fname, struct KernelAPI api) {
     char *data = 0;
     int size = tarReadFile(fname, &data);
-    if (size == 0) {
+    if (size < 0) {
         return 0;
     }
 
