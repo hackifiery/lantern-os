@@ -1,10 +1,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include "io.h"
 #include "elf.h"
 #include "ustar.h"
 #include "binary.h"
 #include "api.h"
+#define USER_STACK_SIZE (16 * 1024)
+static uint8_t userStack[USER_STACK_SIZE] __attribute__((aligned(16)));
+extern void enterUsermode(uint32_t entry, uint32_t userStackTop, void *arg);
 
 int loadBinary(const char* fname, struct KernelAPI api) {
     char *data = 0;
@@ -37,6 +41,7 @@ int loadBinary(const char* fname, struct KernelAPI api) {
     }
     else return 0; // isnt elf
     void (*entry)(struct KernelAPI*) = (void*)ehdr->e_entry;
-    entry(&api);
+    fmtWrite("about to run, entry=0x%x\n", ehdr->e_entry);
+    enterUsermode(ehdr->e_entry, (uint32_t)(userStack + USER_STACK_SIZE), &api);
     return 1;
 }

@@ -6,6 +6,7 @@ struct idtEntry idt[256];
 struct idtPtr idtp;
 volatile unsigned int sysTicks = 0;
 extern void isrDefault(void);
+extern void int80Handler(void);
 
 void remapPic(void) {
     outb(0x20, 0x11); // Initialize Master
@@ -26,6 +27,14 @@ void setIdtGate(uint8_t num, unsigned int base) {
     idt[num].sel     = 0x08;
     idt[num].always0 = 0;
     idt[num].flags   = 0x8E; 
+}
+
+void setIdtGateWithFlags(uint8_t num, unsigned int base, uint8_t flags) {
+    idt[num].base_lo = (base & 0xFFFF);
+    idt[num].base_hi = (base >> 16) & 0xFFFF;
+    idt[num].sel     = 0x08;
+    idt[num].always0 = 0;
+    idt[num].flags   = flags; 
 }
 
 void initIdt(void) {
@@ -90,7 +99,7 @@ void initIdt(void) {
 
     setIdtGate(34, (unsigned int)isr34); // user-thrown exception
     //setIdtGate(35, (unsigned int)isr35); // oom
-
+    setIdtGateWithFlags(0x80, (unsigned int)int80Handler, 0xEE); // syscall
     remapPic();
     loadIdt((unsigned int)&idtp);
 }

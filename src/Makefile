@@ -1,6 +1,6 @@
 include settings.mk
 
-OBJS := boot.o kernel.o io.o idt.o interrupts.o sys.o gdt.o gdt_flush.o ata.o ustar.o sh.o mem.o fd.o syscalls.o binary.o
+OBJS := boot.o kernel.o io.o idt.o interrupts.o sys.o gdt.o gdt_flush.o ata.o ustar.o sh.o mem.o fd.o syscalls.o binary.o tss_flush.o ring3.o int80.o
 
 all: kern.bin
 

@@ -1,11 +1,24 @@
 #include "gdt.h"
 #include <stdint.h>
+#include <string.h>
 
-// 3 entries: Null, Code, and Data
-struct GdtEntry gdt[3];
+// null, kernel code, kernel data, user code, user data, tss
+struct GdtEntry gdt[6];
 struct GdtPtr gdtp;
 
+struct Tss tss;
 extern void gdtFlush(unsigned int a);
+extern void tssFlush(void);
+extern uint32_t tss_stack_top;
+
+void setTssGate(int num, uint32_t esp0, uint32_t ss0) {
+    uint32_t base = (uint32_t) &tss;
+	uint32_t limit = sizeof(struct Tss);
+    setGdtGate(num, base, limit, 0xE9, 0x00); // 0xE9 = present, ring 3, type 9
+    memset(&tss, 0, sizeof(struct Tss));
+    tss.ss0 = ss0;
+    tss.esp0 = esp0;
+}
 
 void setGdtGate(int num, unsigned int base, unsigned int limit, uint8_t access, uint8_t gran) {
     gdt[num].baseLow    = (base & 0xFFFF);
@@ -20,19 +33,29 @@ void setGdtGate(int num, unsigned int base, unsigned int limit, uint8_t access, 
 }
 
 void initGdt(void) {
-    gdtp.limit = (sizeof(struct GdtEntry) * 3) - 1;
+    gdtp.limit = (sizeof(struct GdtEntry) * 6) - 1;
     gdtp.base  = (unsigned int)&gdt;
 
     // 0x00: Null segment
     setGdtGate(0, 0, 0, 0, 0);
 
-    // 0x08: Code segment (Base: 0, Limit: 4GB, 32-bit, Ring 0)
+    // 0x08: Kernel Code segment (Base: 0, Limit: 4GB, 32-bit, Ring 0)
     // Granularity 0xCF = 4KB blocks, 32-bit mode
     setGdtGate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);
 
-    // 0x10: Data segment (Base: 0, Limit: 4GB, 32-bit, Ring 0)
+    // 0x10: Kernel Data segment (Base: 0, Limit: 4GB, 32-bit, Ring 0)
     setGdtGate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);
+
+    // 0x1B: User code segment (Base: 0, Limit: 4GB, 32-bit, Ring 3)
+    setGdtGate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF);
+
+    // 0x23: User data segment (Base: 0, Limit: 4GB, 32-bit, Ring 3)
+    setGdtGate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF);
+
+    // 0x28: TSS segment (Base: &tss, Limit: sizeof(struct Tss), Ring 3)
+    setTssGate(5, (uint32_t)&tss_stack_top, 0x10);
 
     // Call the assembly function to load the GDT
     gdtFlush((unsigned int)&gdtp);
+    tssFlush();
 }

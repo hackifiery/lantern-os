@@ -11,6 +11,7 @@ global _start
 global halt
 extern initIdt
 extern initSerial
+global tss_stack_top
 
 _start:
     ; DEBUG: mov dword [0xb8004], 0x2f4c2f4c
@@ -43,3 +44,8 @@ align 16
 stack_bottom:
 resb 16384              ; 16 KB stack
 stack_top:
+
+align 16
+tss_stack_bottom:
+resb 4096          ; kernel stack used only for ring3->ring0 transitions
+tss_stack_top:

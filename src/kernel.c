@@ -25,6 +25,7 @@
 
 //void* sbrk(int increment);
 
+extern void jump_usermode(void);
 struct KernelAPI api;
 
 void kmain(unsigned int entryCount, struct E820Entry* entries) {
@@ -67,6 +68,7 @@ void kmain(unsigned int entryCount, struct E820Entry* entries) {
     mem.entry_count = entryCount;
     mem.entries = entries;
     //init(memInit((void*)HEAP_START, HEAP_SIZE), "memory manager");
+    //jump_usermode();
 
     printf("\nWelcome to the lanternOS shell\nReport bugs at https://github.com/hackifiery/lantern-os.\n");
     printf("Type 'help' for commands.\n\n");

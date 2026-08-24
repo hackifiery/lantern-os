@@ -1,22 +1,79 @@
 #include "fd.h"
 #include "io.h"
 #include "sys.h"
+#include "idt.h"
+#include "sh.h"
 #include "mem.h"
 #include <stdint.h>
 #include <sys/stat.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/time.h>
+#include <sys/times.h>
 #include <errno.h>
 #include <stdio.h>
+#include "api.h"
+#include "syscall_nums.h"
 
 #define STDIN_BUF_LEN 256
 
 #ifndef S_IFCHR
 #define S_IFCHR 0020000
 #endif
+
+#ifdef errno
 #undef errno
-//extern void writeChar(char c);
-//extern char getInput(void);
+#endif
+
+
+struct InterruptFrame {
+    long ebx;
+    long ecx;
+    long edx;
+    long esi;
+    long edi;
+    long ebp;
+    long eax;
+    int  xds;
+    int  xes;
+    int  xfs;
+    int  xgs;
+    
+    // Pushed by entry stub to save original EAX / syscall number
+    long orig_eax;
+
+    long eip;
+    int  xcs;
+    long eflags;
+    long esp;
+    int  xss;
+};
+
+typedef int (*Syscall)(struct InterruptFrame *);
+
+#define SYSCALL_DEFINE0(fn) int sys_##fn(struct InterruptFrame *regs)
+
+#define SYSCALL_DEFINE1(fn, t1, a1) \
+    static int do_sys_##fn(t1 a1); \
+    int sys_##fn(struct InterruptFrame *regs) { \
+        return do_sys_##fn((t1)regs->ebx); \
+    } \
+    static int do_sys_##fn(t1 a1)
+
+#define SYSCALL_DEFINE2(fn, t1, a1, t2, a2) \
+    static int do_sys_##fn(t1 a1, t2 a2); \
+    int sys_##fn(struct InterruptFrame *regs) { \
+        return do_sys_##fn((t1)regs->ebx, (t2)regs->ecx); \
+    } \
+    static int do_sys_##fn(t1 a1, t2 a2)
+
+#define SYSCALL_DEFINE3(fn, t1, a1, t2, a2, t3, a3) \
+    static int do_sys_##fn(t1 a1, t2 a2, t3 a3); \
+    int sys_##fn(struct InterruptFrame *regs) { \
+        return do_sys_##fn((t1)regs->ebx, (t2)regs->ecx, (t3)regs->edx); \
+    } \
+    static int do_sys_##fn(t1 a1, t2 a2, t3 a3)
+
 
 static char stdinBuf[STDIN_BUF_LEN];
 static size_t stdinBufLen = 0;
@@ -58,34 +115,32 @@ static int __stdout_put(char c, struct __file *f) {
     return 0;
 }
 
-// get function for stdin (now replaced with __read)
-/*static int __stdin_get(struct __file *f) {
-    (void)f;
-    char c;
-    while ((c = getInput()) == 0) {
-        // wait for keypress
+// Internal read function so __stdin_get and sys_read share implementation
+static int kread_impl(int fd, void* buf, size_t count) {
+    if (fd == 0) {
+        if (!stdinLineReady) {
+            readStdinLine();
+        }
+        size_t copyCount = count;
+        size_t actualCount = stdinBufLen - stdinBufPos; // number of characters in the buffer we want to read
+        if (copyCount > actualCount) copyCount = actualCount; // prevents overflow
+        memcpy(buf, &stdinBuf[stdinBufPos], copyCount);
+        stdinBufPos += copyCount;
+        if (stdinBufPos >= stdinBufLen) stdinLineReady = 0; // stdin buffer done reading
+        return (int)copyCount;
     }
-    writeChar(c);  // echo
-    if (c != '\b') return (unsigned char)c;
-    else return 0;  // don't return backspace to caller
-}*/
-int _read(int fd, void* buf, size_t count);
+    return read(fd, buf, count);
+}
+
 static int __stdin_get(struct __file *f) {
     (void)f;
     unsigned char c;
-    if (_read(0, &c, 1) == 1) {
+    if (kread_impl(0, &c, 1) == 1) {
         return (int)c;
     } else {
         return EOF;
     }
 }
-/*static int __stdin_get(struct __file *f) {
-    char c;
-    while ((c = getInput()) == 0) {}
-    fmtWrite("DEBUG: got %d ('%c')\n", c, c);   // kernel debug
-    writeChar(c);   // echo
-    return c;
-}*/
 
 // stdout FILE - write only, no buffering flags needed
 static FILE __stdout = {
@@ -116,46 +171,30 @@ FILE * const stdout = &__stdout;
 FILE * const stdin  = &__stdin;
 FILE * const stderr = &__stderr;
 
-int errno = 0;
 
-int _open(const char* path, int flags, int mode) {
+SYSCALL_DEFINE3(open, const char*, path, int, flags, int, mode) {
     return open(path, flags, mode);
 }
 
-int _close(int fd) {
+SYSCALL_DEFINE1(close, int, fd) {
     return close(fd);
 }
 
-int _read(int fd, void* buf, size_t count) {
-    if (fd == 0) {
-        if (!stdinLineReady) {
-            readStdinLine();
-        }
-        size_t copyCount = count;
-        size_t actualCount = stdinBufLen - stdinBufPos; // number of characters in the buffer we want to read
-        if (copyCount > actualCount) copyCount = actualCount; // prevents overflow
-        memcpy(buf, &stdinBuf[stdinBufPos], copyCount);
-        stdinBufPos += copyCount;
-        if (stdinBufPos >= stdinBufLen) stdinLineReady = 0; // stdin buffer done reading
-        return (int)copyCount;
-    }
-    return read(fd, buf, count);
+SYSCALL_DEFINE3(read, int, fd, void*, buf, size_t, count) {
+    return kread_impl(fd, buf, count);
 }
 
-int _write(int fd, const void* buf, size_t count) {
+SYSCALL_DEFINE3(write, int, fd, const void*, buf, size_t, count) {
+    //fmtWrite("sys_write called, fd=%d count=%d\n", fd, count);
     return write(fd, buf, count);
 }
 
-off_t _lseek(int fd, off_t offset, int whence) {
+SYSCALL_DEFINE3(lseek, int, fd, off_t, offset, int, whence) {
     errno = ESPIPE;   // not seekable
     return (off_t)-1;
 }
 
-int lseek(int fd, int offset, int whence) {
-    return _lseek(fd, offset, whence);
-}
-
-int _fstat(int fd, struct stat* st) {
+SYSCALL_DEFINE2(fstat, int, fd, struct stat*, st) {
     memset(st, 0, sizeof(struct stat));
     st->st_mode = S_IFCHR;
     st->st_size = 0;
@@ -170,49 +209,93 @@ int _fstat(int fd, struct stat* st) {
     return 0;
 }
 
-int fstat(int fd, struct stat* st) {
-    return _fstat(fd, st);
-}
-
-int _isatty(int fd) {
+SYSCALL_DEFINE1(isatty, int, fd) {
     return (fd == 0 || fd == 1 || fd == 2) ? 1 : 0;
 }
 
-int isatty(int fd) {
-    return _isatty(fd);
-}
-
-int _getpid(void) {
+SYSCALL_DEFINE0(getpid) {
     return 1;
 }
 
-int getpid(void) {
-    return _getpid();
-}
-
-int _kill(int pid, int sig) {
+SYSCALL_DEFINE2(kill, int, pid, int, sig) {
     return -1;
 }
 
-int kill(int pid, int sig) {
-    return _kill(pid, sig);
+SYSCALL_DEFINE1(exit, int, status) {
+    //halt();
+    sh(NULL, NULL);
+    return 0;
 }
 
-void _exit(int status) {
-    halt();
+SYSCALL_DEFINE1(sbrk, int, increment) {
+    return (int)(uintptr_t)kbrk(increment);
 }
 
-void* _sbrk(int increment) {
-    return kbrk(increment);
+SYSCALL_DEFINE1(times, struct tms*, buf) { 
+    errno = ENOSYS; 
+    return -1; 
 }
 
-void* sbrk(int increment) {
-    return _sbrk(increment);
+SYSCALL_DEFINE1(wait, int*, status) { 
+    errno = ENOSYS; 
+    return -1; 
 }
-int _times(struct tms* buf)    { errno = ENOSYS; return -1; }
-int _wait(int* status)         { errno = ENOSYS; return -1; }
-int _link(const char* old, const char* new) { errno = ENOSYS; return -1; }
-int _unlink(const char* name)  { errno = ENOSYS; return -1; }
-int _stat(const char* file, struct stat* st) { errno = ENOSYS; return -1; }
-int _gettimeofday(struct timeval* tv, void* tz) { errno = ENOSYS; return -1; }
-clock_t _clock(void)           { errno = ENOSYS; return (clock_t)-1; }
+
+SYSCALL_DEFINE2(link, const char*, old, const char*, new) { 
+    errno = ENOSYS; 
+    return -1; 
+}
+
+SYSCALL_DEFINE1(unlink, const char*, name) { 
+    errno = ENOSYS; 
+    return -1; 
+}
+
+SYSCALL_DEFINE2(stat, const char*, file, struct stat*, st) { 
+    errno = ENOSYS; 
+    return -1; 
+}
+
+SYSCALL_DEFINE2(gettimeofday, struct timeval*, tv, void*, tz) { 
+    errno = ENOSYS; 
+    return -1; 
+}
+
+SYSCALL_DEFINE0(clock) { 
+    errno = ENOSYS; 
+    return (clock_t)-1; 
+}
+
+const static Syscall syscallTable[] = {
+    [SYS_read]  = sys_read,
+    [SYS_write] = sys_write,
+    [SYS_exit]  = sys_exit,
+    [SYS_sbrk]  = sys_sbrk,
+    [SYS_times] = sys_times,
+    [SYS_wait]  = sys_wait,
+    [SYS_link]  = sys_link,
+    [SYS_unlink]= sys_unlink,
+    [SYS_stat]  = sys_stat,
+    [SYS_gettimeofday] = sys_gettimeofday,
+    [SYS_clock] = sys_clock,
+    [SYS_open]  = sys_open,
+    [SYS_close] = sys_close,
+    [SYS_fstat] = sys_fstat,
+    [SYS_isatty]= sys_isatty,
+    [SYS_getpid]= sys_getpid,
+    [SYS_kill]  = sys_kill,
+    [SYS_lseek] = sys_lseek,
+};
+#define SYSCALL_COUNT (sizeof(syscallTable)/sizeof(*syscallTable))
+
+int syscallDispatcher(struct InterruptFrame *regs) {
+    //fmtWrite("syscall nr=%d\n", regs->orig_eax);
+    unsigned int nr = (unsigned int)regs->orig_eax;
+    if (nr >= SYSCALL_COUNT || !syscallTable[nr]) {
+        fmtWrite("Unhandled syscall: %d\n", regs->orig_eax);
+        //userPanic();
+        return -ENOSYS;
+        //__asm__ volatile("int $0x3");
+    }
+    return syscallTable[nr](regs);
+}
